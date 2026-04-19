@@ -1,0 +1,13 @@
+node_modules/
+tmp/
+dist/
+.DS_Store
+
+# Harness artifacts
+.claude/worktrees/
+.claude/scheduled_tasks.lock
+
+# Secrets (should never exist here, but belt-and-braces)
+.env
+.env.local
+secrets.env

@@ -1,0 +1,104 @@
+# @sptk-epb/visual-audit
+
+Shared Playwright visual-audit library for SPTK-EPB web projects — screenshot
+capture, DOM layout inspection, overflow detection.
+
+Extracted from [android-device-manager](https://github.com/SPTK-EPB/android-device-manager)'s
+`scripts/capture-screenshots.mjs` + `scripts/inspect-layout.mjs`. See
+[command-center#76](https://github.com/SPTK-EPB/command-center/issues/76) for rationale.
+
+## Install
+
+Private repo — consume via git URL:
+
+```bash
+bun add git+https://github.com/SPTK-EPB/sptk-visual-audit.git
+# or
+npm install git+https://github.com/SPTK-EPB/sptk-visual-audit.git
+```
+
+Requires Playwright as a peer dependency:
+
+```bash
+bun add -d playwright
+bunx playwright install chromium
+```
+
+## Usage
+
+### Capture screenshots
+
+```js
+import { captureScreenshots } from '@sptk-epb/visual-audit';
+import { authenticate, PAGES } from './audit/auth.mjs';
+
+const result = await captureScreenshots({
+  baseUrl: 'http://localhost:3000',
+  viewports: [360, 1280],
+  pages: PAGES,
+  authenticate,
+  outDir: './tmp/screenshots/2026-04-19',
+  fullPageMode: 'large',   // 'always' | 'never' | 'large'
+  archive: true,           // rename existing .png to -before.png
+});
+// → { captured, failed, overflowWarnings, sizeWarnings, outDir }
+```
+
+### Inspect layout
+
+```js
+import { inspectLayout } from '@sptk-epb/visual-audit';
+import { authenticate } from './audit/auth.mjs';
+
+await inspectLayout({
+  baseUrl: 'http://localhost:3000',
+  path: '/dashboard/policies',
+  width: 360,
+  needsAuth: true,
+  authenticate,
+  selectors: ['main', '[role=grid]', 'header'],
+});
+// Prints an overflow / wide-element / grid-container report to stdout.
+```
+
+## Adapter contract
+
+Consumers provide two things:
+
+1. **`authenticate(browser, baseUrl)`** — returns a Playwright `storageState`.
+   Owns project-specific auth: API sign-in, cookie setup, D1 fixtures, etc.
+
+2. **`pages`** — a registry mapping page keys to `{ path, auth?, setup? }`:
+
+```js
+export const PAGES = {
+  signin:    { path: '/signin', auth: false },
+  dashboard: { path: '/dashboard' },
+  policies:  { path: '/dashboard/policies' },
+  // Page-specific setup wins over the global setup.
+  analytics: {
+    path: '/dashboard/analytics',
+    setup: async (page, { name, width, baseUrl }) => {
+      await page.click('text=Last 7 days');
+    },
+  },
+};
+```
+
+See [docs/ADAPTER.md](docs/ADAPTER.md) for the full contract + examples.
+
+## Roadmap
+
+This is the Phase 1 library extraction. Upcoming work tracked in
+[command-center#76](https://github.com/SPTK-EPB/command-center/issues/76):
+
+- **Phase 2**: `--exhaustive` tab walk (BFS through `[role=tablist]`)
+- **Phase 3**: `--mode=populated` with fixture seeding
+- **Phase 4**: CC-level `responsive-audit-workflow` skill + per-project adoption
+- **Phase 5**: Close duplicate per-project capture scripts
+
+## Related
+
+- [Phase 1.b — UDM consumption issue](https://github.com/SPTK-EPB/android-device-manager/issues) (to be filed)
+- `.claude/skills/responsive-audit-workflow` (UDM, to promote to CC in Phase 4)
+- `.claude/skills/playwright-visual-testing` (CC, already exists — patterns reference)
