@@ -12,3 +12,4 @@ export { captureScreenshots } from './capture.mjs';
 export { inspectLayout } from './inspect.mjs';
 export { detectOverflow } from './utils/overflow.mjs';
 export { describeElement } from './utils/describe.mjs';
+export { readPngDimensions } from './utils/png-dimensions.mjs';

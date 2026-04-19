@@ -13,11 +13,13 @@ import { chromium } from 'playwright';
 import { mkdir, rename, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { detectOverflow } from './utils/overflow.mjs';
+import { readPngDimensions } from './utils/png-dimensions.mjs';
 
 const DEFAULT_VIEWPORT_HEIGHT = 800;
 const DEFAULT_WAIT_MS = 4000;
 const DEFAULT_GOTO_TIMEOUT_MS = 30000;
 const FULL_PAGE_MODES = new Set(['always', 'never', 'large']);
+const MODE_DRIFT_HEIGHT_RATIO = 1.2;
 
 function shouldCaptureFullPage(mode, width) {
   if (mode === 'always') return true;
@@ -29,6 +31,38 @@ function minSizeForWidth(width) {
   if (width <= 360) return 20 * 1024;
   if (width < 640) return 30 * 1024;
   return 50 * 1024;
+}
+
+/**
+ * Classify an existing PNG's capture mode from its height relative to the viewport.
+ * Viewport-only captures are ~viewportHeight tall; full-page captures are typically
+ * 1.5-10× taller. Heights within 20% of viewportHeight are treated as viewport-mode.
+ */
+function classifyExistingMode(pngHeight, viewportHeight) {
+  return pngHeight > viewportHeight * MODE_DRIFT_HEIGHT_RATIO ? 'fullpage' : 'viewport';
+}
+
+async function detectModeDrifts({ pages, viewports, outDir, fullPageMode, viewportHeight }) {
+  const drifts = [];
+  for (const width of viewports) {
+    const thisRunMode = shouldCaptureFullPage(fullPageMode, width) ? 'fullpage' : 'viewport';
+    for (const [name] of Object.entries(pages)) {
+      const filename = `${name}-${width}.png`;
+      const filepath = join(outDir, filename);
+      const existing = await stat(filepath).catch(() => null);
+      if (!existing) continue;
+      try {
+        const { height } = await readPngDimensions(filepath);
+        const existingMode = classifyExistingMode(height, viewportHeight);
+        if (existingMode !== thisRunMode) {
+          drifts.push({ filename, existingMode, existingHeight: height, newMode: thisRunMode });
+        }
+      } catch {
+        // Unreadable PNG or non-PNG — skip drift detection for this file.
+      }
+    }
+  }
+  return drifts;
 }
 
 /**
@@ -48,6 +82,9 @@ function minSizeForWidth(width) {
  * @property {string} outDir                    Output directory for PNGs.
  * @property {'always'|'never'|'large'} [fullPageMode] Default 'large'.
  * @property {boolean} [archive]                Default true. Renames existing png → <name>-before.png.
+ * @property {boolean} [forceRearchive]         Default false. Archive even when existing capture
+ *                                              mode (viewport vs full-page) differs from this run.
+ *                                              Without it, mode drift halts the batch.
  * @property {number} [viewportHeight]          Default 800.
  * @property {number} [waitMs]                  Default 4000.
  * @property {number} [gotoTimeoutMs]           Default 30000.
@@ -73,6 +110,7 @@ export async function captureScreenshots(opts) {
     outDir,
     fullPageMode = 'large',
     archive = true,
+    forceRearchive = false,
     viewportHeight = DEFAULT_VIEWPORT_HEIGHT,
     waitMs = DEFAULT_WAIT_MS,
     gotoTimeoutMs = DEFAULT_GOTO_TIMEOUT_MS,
@@ -96,6 +134,21 @@ export async function captureScreenshots(opts) {
   }
 
   await mkdir(outDir, { recursive: true });
+
+  if (archive && !forceRearchive) {
+    const drifts = await detectModeDrifts({ pages, viewports, outDir, fullPageMode, viewportHeight });
+    if (drifts.length > 0) {
+      error(`\nCapture mode drift detected in ${drifts.length} file(s):`);
+      for (const d of drifts) {
+        error(`  ${d.filename} — existing=${d.existingMode} (height=${d.existingHeight}px), this run=${d.newMode}`);
+      }
+      error(`\nArchive would produce misleading before/after pairs. Choose one:`);
+      error(`  --force-rearchive    Archive anyway (existing → -before.png).`);
+      error(`  --no-archive         Skip archiving (overwrite current without creating -before).`);
+      error(``);
+      throw new Error(`Capture halted: mode drift detected in ${drifts.length} file(s).`);
+    }
+  }
 
   const browser = await chromium.launch();
 
