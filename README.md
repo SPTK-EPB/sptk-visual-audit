@@ -9,7 +9,7 @@ Extracted from [android-device-manager](https://github.com/SPTK-EPB/android-devi
 
 ## Install
 
-Private repo — consume via git URL:
+Consume via git URL:
 
 ```bash
 bun add git+https://github.com/SPTK-EPB/sptk-visual-audit.git
@@ -21,8 +21,30 @@ Requires Playwright as a peer dependency:
 
 ```bash
 bun add -d playwright
-bunx playwright install chromium
 ```
+
+### Required post-install step
+
+Playwright ships its browser binaries separately from the npm package. Run
+this once after install **and again after every library upgrade**:
+
+```bash
+bunx playwright install chromium
+# or: npx playwright install chromium
+```
+
+Skipping this step produces a failure on the first capture:
+
+```
+Looks like Playwright was just installed or updated.
+Please run the following command to download new browsers:
+  npx playwright install
+```
+
+This re-runs whenever the library bumps its Playwright peer-dep version —
+the local Chromium cache is pinned to the previously-installed Playwright,
+and a version mismatch invalidates it. If in doubt, re-run the command —
+it's a no-op when the cache is already current.
 
 ## Usage
 
