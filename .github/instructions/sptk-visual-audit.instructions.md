@@ -10,6 +10,20 @@ capture time. Downstream CI failures look like import errors, not missing-binary
 When adding new top-level imports of peer deps, verify the CI smoke test (`.github/workflows/ci.yml`)
 installs the dep before running the import check.
 
+## `fullPageMode` default is `'mobile'` — mobile widths are the common full-page target
+
+Below-fold content (empty-state panels, DataGrids, secondary sections) matters
+most at narrow viewports where it's off-screen. `'mobile'` (default) captures
+full-page below 1024px and viewport-only at 1024+; `'desktop'` inverts it;
+`'always'` / `'never'` are unconditional. Legacy `'large'` is retained as a
+silent alias for `'desktop'`. If an adopter wants full-page at every width
+(UDM does), they pass `'always'` explicitly.
+
+The default was `'large'` until [#5](https://github.com/SPTK-EPB/sptk-visual-audit/issues/5).
+That default was backwards: mobile audits hit the below-fold wall first, while
+desktop audits rarely need it. Don't flip the default again without a
+coordinated rollout across all adopters listed in CLAUDE.md.
+
 ## Capture mode drift halts the batch — this is intentional
 
 `captureScreenshots` throws if existing PNGs in `outDir` were captured in a different

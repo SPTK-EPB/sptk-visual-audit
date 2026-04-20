@@ -60,7 +60,9 @@ const result = await captureScreenshots({
   pages: PAGES,
   authenticate,
   outDir: './tmp/screenshots/2026-04-19',
-  fullPageMode: 'large',   // 'always' | 'never' | 'large'
+  fullPageMode: 'mobile',  // 'mobile' (default) | 'desktop' | 'always' | 'never'
+                           // 'mobile'  = full-page <1024px, viewport at 1024+
+                           // 'desktop' = full-page at 1024+, viewport below
   archive: true,           // rename existing .png to -before.png
 });
 // → { captured, failed, overflowWarnings, sizeWarnings, outDir }

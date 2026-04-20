@@ -32,6 +32,13 @@
 - **Rationale**: CLI defaults are project-specific (local dev URL, output directory convention, staging env var names). A one-size-fits-all CLI would need every project's conventions baked in, or a heavy config system. A thin project-level wrapper is 10-20 lines and captures the right defaults.
 - **Tags**: scope, api-surface
 
+## 2026-04-20 — `fullPageMode` default flipped from `'large'` to `'mobile'`
+
+- **Decision**: Default is `'mobile'` (full-page below 1024, viewport at 1024+). Added `'desktop'` as an explicit mode; kept `'large'` as a silent alias for `'desktop'`.
+- **Rationale**: The original `'large'` default captured full-page at desktop widths and viewport-only at mobile widths — exactly backwards for the library's motivating use case (responsive audits of below-fold content at 360/414/768px). Every adopter was going to hit the same wall (UDM already landed on `--full-page always` as a permanent override). Flipping the default is cleaner than a convenience flag because it makes the pit of success match the pit of need. Ships pre-Phase-1.b so no live adopters break; UDM uses `'always'` explicitly and is unaffected.
+- **Tags**: api-surface, defaults, responsive-audit
+- **Issue**: [#5](https://github.com/SPTK-EPB/sptk-visual-audit/issues/5)
+
 ## 2026-04-19 — Playwright as peer dependency
 
 - **Decision**: Declare Playwright as a peer dependency, not a regular dependency.

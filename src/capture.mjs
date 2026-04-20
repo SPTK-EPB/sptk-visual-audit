@@ -18,13 +18,18 @@ import { readPngDimensions } from './utils/png-dimensions.mjs';
 const DEFAULT_VIEWPORT_HEIGHT = 800;
 const DEFAULT_WAIT_MS = 4000;
 const DEFAULT_GOTO_TIMEOUT_MS = 30000;
-const FULL_PAGE_MODES = new Set(['always', 'never', 'large']);
+const DESKTOP_MIN_WIDTH = 1024;
+const FULL_PAGE_MODES = new Set(['always', 'never', 'mobile', 'desktop', 'large']);
 const MODE_DRIFT_HEIGHT_RATIO = 1.2;
 
 function shouldCaptureFullPage(mode, width) {
   if (mode === 'always') return true;
   if (mode === 'never') return false;
-  return width >= 1024; // 'large' (default)
+  // 'desktop' and legacy alias 'large': full-page at desktop widths
+  if (mode === 'desktop' || mode === 'large') return width >= DESKTOP_MIN_WIDTH;
+  // 'mobile' (default): full-page at mobile widths — below-fold content is the
+  // common audit target on narrow viewports.
+  return width < DESKTOP_MIN_WIDTH;
 }
 
 function minSizeForWidth(width) {
@@ -80,7 +85,10 @@ async function detectModeDrifts({ pages, viewports, outDir, fullPageMode, viewpo
  * @property {(browser: import('playwright').Browser, baseUrl: string) => Promise<object>} authenticate
  *                                              Returns Playwright storageState.
  * @property {string} outDir                    Output directory for PNGs.
- * @property {'always'|'never'|'large'} [fullPageMode] Default 'large'.
+ * @property {'always'|'never'|'mobile'|'desktop'|'large'} [fullPageMode]
+ *   Default 'mobile'. 'mobile' = full-page below 1024px, viewport at 1024+.
+ *   'desktop' = full-page at 1024+, viewport below. 'always' / 'never' are
+ *   unconditional. 'large' is a deprecated alias for 'desktop'.
  * @property {boolean} [archive]                Default true. Renames existing png → <name>-before.png.
  * @property {boolean} [forceRearchive]         Default false. Archive even when existing capture
  *                                              mode (viewport vs full-page) differs from this run.
@@ -108,7 +116,7 @@ export async function captureScreenshots(opts) {
     pages,
     authenticate,
     outDir,
-    fullPageMode = 'large',
+    fullPageMode = 'mobile',
     archive = true,
     forceRearchive = false,
     viewportHeight = DEFAULT_VIEWPORT_HEIGHT,
