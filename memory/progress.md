@@ -129,3 +129,53 @@ warmup, opt-in warmup, retry fallback, `waitUntil: 'commit'`) before implementin
 - #1, #2 — Dependabot PRs (informational)
 - Phase 1.b — UDM adoption (blocked on UDM workspace)
 - Tests still not bootstrapped.
+
+## 2026-04-20 — Sparse-capture heuristic overrides (session 4)
+
+Closed #7. First adopter-discovered friction from dugnad-dashboard's Phase 2 run
+— empty-state pages warned on every 1280px capture ("likely auth/nav race,
+retry"). Pressure-tested the 4 options in the issue (per-page flag, global
+threshold, actual retry, drop heuristic). Shipped issue-author's lean
+(`minSizeKb` + `sparseOk`) with one simplification: `minSizeKb: number` not
+`number | false` — `0` disables, positive number sets flat threshold. Kept the
+default width heuristic for populated-page adopters (UDM).
+
+**Shipped (`b181cc1`):**
+
+- `src/capture.mjs`: per-page `sparseOk: true` (silence for legitimate
+  empty-state pages) + global `minSizeKb: number` (flat threshold; `0` disables).
+  Precedence: sparseOk > minSizeKb=0 > minSizeKb=N > built-in width heuristic.
+  Rewrote warning message — dropped false "retry" promise; points adopters at
+  the new override options.
+- `README.md`: usage snippet shows `minSizeKb` with semantics comments;
+  `sparseOk` example on a `PAGES` registry block; explicit precedence note.
+- `.claude/rules/sptk-visual-audit.md` + `.github/instructions/` mirror: new
+  "Sparse-capture heuristic: tune, don't default to off" section. Guards
+  against future "just disable it" temptations by pointing at per-page
+  `sparseOk` as the preferred fix.
+
+**Verification:**
+
+- `node --check` + import smoke green.
+- Inline 11-case decision-table test covers: width heuristic (4 widths ×
+  above/below threshold), `minSizeKb: 0` (disabled), flat threshold
+  (above/below/vs-heuristic-divergence), and `sparseOk` precedence. All pass.
+- CI green in 10s on first push.
+
+**Process notes:**
+
+- Clean first-try execution. Plan → API proposal (CLAUDE.md ask-first boundary)
+  → `/recommend` simplification → edits → test → commit. Zero retries.
+- Third consecutive session (#5 → #4 → #7) using inline `node -e` decision-table
+  smoke tests in lieu of committed regression tests. Pattern is working —
+  formal tests remain in `memory/tasks.md` TODO list.
+- No new `[CC]` or `[MCP-GAP]` items; existing staging preserved for CC pickup.
+
+**Open:**
+
+- #8 (docs — Pattern B in ADAPTER.md, unblocks Smie)
+- #9 (ad-hoc URL paths with query strings)
+- #10 (inspect-layout `--setup` flag parity)
+- #11 (compareScreenshots pixelmatch wrapper)
+- #1, #2 — Dependabot PRs
+- Tests still not bootstrapped.
