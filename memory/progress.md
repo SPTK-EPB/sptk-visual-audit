@@ -41,3 +41,33 @@ drift across per-project scripts) discovered in ADM session 411.
 - Library owns pure engines; auth and page registry are adapter inputs
 - No CLI in this repo — each consumer wraps the library in its own script
 - Playwright as a peer dependency (consumers install + pin)
+
+## 2026-04-20 — Library adoption friction fixes (session 1)
+
+First focused session on this repo. Closed two docs/tooling issues that
+preempt adopter confusion during Phase 1.b wire-up.
+
+**Shipped:**
+
+- **#6 closed** (`e798ee1`): `scripts/dev-setup.sh` + `AGENTS.md` Development
+  section. One-command setup (`npm run setup`) installs deps + Chromium binary.
+  Docs cover npm link for iterative consumer debugging and the lockfile-only
+  bump pattern for shipping fixes.
+- **#3 closed** (`4ba2f57`): README `Install` section restructured. Post-install
+  `npx playwright install chromium` is now a dedicated subsection with the
+  exact error consumers see when skipped, plus version-bump warning.
+- `bun.lock` added to `.gitignore` (committed lockfile is `package-lock.json`
+  to match CI's `npm install` step).
+
+**Friction captured:**
+
+- Chose `bun install` in dev-setup.sh first, then walked back to `npm install`
+  after noticing CI uses npm. Staged as a learned-rule candidate: check
+  `.github/workflows/ci.yml` + tracked lockfile before picking a dev-setup
+  package manager.
+
+**Open:**
+
+- #4 — library-level retry-on-timeout for cold-compile first capture
+- #5 — responsive audit defaults hide below-fold content on mobile viewports
+- #1, #2 — Dependabot PRs (actions/checkout, setup-node 5→6), informational

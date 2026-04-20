@@ -70,10 +70,12 @@ for dir in "$ROOT" "$ROOT"/*/; do
   fi
 done
 
-# Bun test
+# Bun test — use `bun run test` so package.json's test script (which may include
+# `|| true` for repos without tests yet) takes precedence over Bun's native runner,
+# which exits non-zero when no *.test.* files exist.
 if [ -f "$ROOT/package.json" ] && grep -q '"test"' "$ROOT/package.json" 2>/dev/null; then
   if command -v bun >/dev/null 2>&1; then
-    OUTPUT=$(run_in "$ROOT" bun test 2>&1)
+    OUTPUT=$(run_in "$ROOT" bun run test 2>&1)
     [ $? -ne 0 ] && ERRORS="${ERRORS}Bun test failed:\n${OUTPUT}\n\n"
   fi
 fi
