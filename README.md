@@ -66,9 +66,28 @@ const result = await captureScreenshots({
   archive: true,           // rename existing .png to -before.png
   warmup: true,            // default. One pre-loop navigation to warm dev-server
                            // cold compile. Set false for production/staging URLs.
+  minSizeKb: undefined,    // undefined → width heuristic (20/30/50 KB by width).
+                           // 0 → disable the sparse-capture check entirely.
+                           // N → flat N-KB threshold at every width.
 });
 // → { captured, failed, overflowWarnings, sizeWarnings, outDir }
 ```
+
+The sparse-capture heuristic warns when a PNG is under a size threshold — this
+catches auth redirects and content races, but false-positives on legitimately
+sparse pages (empty-state dashboards, minimal marketing pages). Per-page
+`sparseOk: true` silences the warning on known-sparse pages without turning it
+off globally:
+
+```js
+export const PAGES = {
+  index:   { path: '/' },
+  devices: { path: '/my/devices', sparseOk: true },  // empty-state dashboard
+  apps:    { path: '/my/apps', sparseOk: true },     // empty-state dashboard
+};
+```
+
+Precedence: per-page `sparseOk` > global `minSizeKb: 0` > global `minSizeKb: N` > built-in width heuristic.
 
 ### Inspect layout
 

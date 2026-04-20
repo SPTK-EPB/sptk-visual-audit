@@ -75,6 +75,11 @@ async function detectModeDrifts({ pages, viewports, outDir, fullPageMode, viewpo
  * @typedef {Object} PageConfig
  * @property {string} path
  * @property {boolean} [auth]           If false, capture without storageState.
+ * @property {boolean} [sparseOk]       If true, skip the size-warning heuristic
+ *                                      for this page. Use on legitimately
+ *                                      empty-state pages (empty dashboards,
+ *                                      minimal marketing pages) to avoid
+ *                                      forever-warning on every run.
  * @property {(page: import('playwright').Page, ctx: { name: string, width: number, baseUrl: string }) => Promise<void>} [setup]
  */
 
@@ -104,6 +109,12 @@ async function detectModeDrifts({ pages, viewports, outDir, fullPageMode, viewpo
  *                                              URLs where no dev-server compile occurs.
  * @property {number} [warmupTimeoutMs]         Default 60000. Longer than gotoTimeoutMs to
  *                                              accommodate 10-30s cold-compile navigations.
+ * @property {number} [minSizeKb]               Override the built-in width-based size
+ *                                              heuristic (20KB ≤360px, 30KB <640px,
+ *                                              50KB otherwise). `0` disables the check
+ *                                              entirely. Undefined uses the built-in
+ *                                              heuristic. Per-page `sparseOk: true`
+ *                                              takes precedence over this.
  * @property {(page: import('playwright').Page, ctx: { name: string, width: number, baseUrl: string }) => Promise<void>} [setup]
  *                                              Global per-viewport setup (page-level setup wins).
  * @property {(msg: string) => void} [log]      Default console.log.
@@ -132,6 +143,7 @@ export async function captureScreenshots(opts) {
     gotoTimeoutMs = DEFAULT_GOTO_TIMEOUT_MS,
     warmup = true,
     warmupTimeoutMs = DEFAULT_WARMUP_TIMEOUT_MS,
+    minSizeKb,
     setup: globalSetup,
     log = console.log,
     warn = console.warn,
@@ -256,12 +268,15 @@ export async function captureScreenshots(opts) {
           await page.close();
 
           const { size } = await stat(filepath);
-          const minSize = minSizeForWidth(width);
-          if (size < minSize) {
-            warn(
-              `  WARN: ${filename} — suspicious size (${Math.round(size / 1024)}KB < ${minSize / 1024}KB for ${width}px) — likely auth/nav race, retry`
-            );
-            sizeWarnings++;
+          if (!config.sparseOk && minSizeKb !== 0) {
+            const minSize =
+              minSizeKb !== undefined ? minSizeKb * 1024 : minSizeForWidth(width);
+            if (size < minSize) {
+              warn(
+                `  WARN: ${filename} — sparse capture (${Math.round(size / 1024)}KB < ${minSize / 1024}KB) — if legitimate empty-state, set sparseOk: true (per page) or minSizeKb (globally); otherwise check for auth/nav race`
+              );
+              sizeWarnings++;
+            }
           }
 
           log(`  ${filename}`);

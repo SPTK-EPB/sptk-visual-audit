@@ -68,6 +68,20 @@ hook: `await page.evaluate(() => document.querySelector('astro-dev-toolbar')?.re
 The library intentionally does not inject removal — it cannot know which overlays
 are semantically important to a given project.
 
+## Sparse-capture heuristic: tune, don't default to off
+
+The width-based size heuristic (`minSizeForWidth`: 20KB ≤360, 30KB <640, 50KB
+otherwise) catches auth redirects and content races where a capture completes
+against the wrong page. It also false-positives on legitimately-sparse pages
+(empty-state consumer dashboards, minimal marketing pages). Override precedence:
+per-page `sparseOk: true` > global `minSizeKb: 0` (disable) > global `minSizeKb: N`
+(flat threshold) > built-in width heuristic. The DEFAULT stays the width
+heuristic — don't change the library default without a coordinated rollout
+across adopters (the canary signal is valuable for populated-page audits like
+UDM's). When fixing a false-positive, prefer per-page `sparseOk` over global
+disable: keeps the signal live for the majority of pages. Closed by
+[#7](https://github.com/SPTK-EPB/sptk-visual-audit/issues/7).
+
 ## Keep library generic: project logic stays in the adapter
 
 The library provides: capture pipeline, overflow detection, layout inspection, PNG
