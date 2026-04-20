@@ -71,3 +71,26 @@ preempt adopter confusion during Phase 1.b wire-up.
 - #4 — library-level retry-on-timeout for cold-compile first capture
 - #5 — responsive audit defaults hide below-fold content on mobile viewports
 - #1, #2 — Dependabot PRs (actions/checkout, setup-node 5→6), informational
+
+## 2026-04-20 — Flipped fullPageMode default to 'mobile' (session 2)
+
+Closed #5. `fullPageMode` default was `'large'` (full-page at desktop widths only),
+which was backwards: mobile responsive audits need full-page most, and UDM had
+already landed on `--full-page always` as a permanent override. Every future
+adopter was going to hit the same wall.
+
+**Shipped (`d80cc59`):**
+
+- `src/capture.mjs`: default `'mobile'`. Added explicit `'desktop'` mode (full-page
+  at 1024+). Kept `'large'` as silent alias for `'desktop'`. Updated JSDoc.
+- `README.md` usage example shows `'mobile'` with inline mode semantics.
+- Project pattern rule added in `.claude/rules/` + `.github/instructions/` mirror.
+- Decision logged in `memory/decisions.md`.
+- Verified semantics with inline truth-table (5 modes × 4 widths), CI green in 9s.
+
+**Open:**
+
+- #4 — library-level retry-on-timeout
+- #1, #2 — Dependabot PRs
+- Tests still not bootstrapped; the shipped change was covered by an inline node -e
+  truth table, not a committed regression test.
