@@ -16,6 +16,7 @@
     "src/"
   ],
   "scripts": {
+    "setup": "bash scripts/dev-setup.sh",
     "lint": "echo 'lint: no linter configured yet'",
     "typecheck": "echo 'typecheck: JSDoc only — no tsc step'",
     "test": "node --test src/**/*.test.mjs || true"

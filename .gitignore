@@ -2,6 +2,7 @@ node_modules/
 tmp/
 dist/
 .DS_Store
+bun.lock
 
 # Harness artifacts
 .claude/worktrees/

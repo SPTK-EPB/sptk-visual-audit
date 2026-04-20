@@ -58,6 +58,48 @@ docs/
 - **Don't introduce hard dependencies.** Every new dep becomes a consumer burden.
   Playwright is the only peer dep; keep it that way.
 
+## Development
+
+### First-time setup
+
+```bash
+bash scripts/dev-setup.sh
+# or: bun run setup
+```
+
+Installs dev deps and the Chromium browser Playwright needs at runtime.
+Peer-dep installs (`bun add`/`npm install`) do NOT fetch Chromium — `capture.mjs`
+fails at runtime without it.
+
+### Iterating with a real consumer
+
+Pushing to `main` and bumping the consumer's lockfile works, but loops slowly.
+For fast iteration use `npm link`:
+
+```bash
+# In this repo (once):
+npm link
+
+# In the consumer repo (once, per consumer):
+npm link @sptk-epb/visual-audit
+```
+
+Edits in `src/` are picked up by the consumer immediately — no reinstall.
+When done, `npm unlink @sptk-epb/visual-audit` in the consumer, then
+`npm install` to restore the git-ref dep.
+
+### Shipping a fix
+
+1. Push to `main` — there is no npm registry publish step.
+2. In the consumer, run `npm install @sptk-epb/visual-audit` (no args). npm
+   re-resolves the git ref and bumps only the lockfile SHA. `package.json`
+   stays unchanged.
+3. If npm rewrites the dep to `github:SPTK-EPB/...` shorthand, revert that
+   chunk to keep the canonical `git+https://` form.
+
+Never bump the `version` field in `package.json` as a release mechanism —
+consumers pin by git SHA, not semver.
+
 ## Testing
 
 No test suite yet. Phase 1 is a verbatim extract — correctness is proven by
