@@ -33,14 +33,19 @@ pairs where one side is viewport-height and the other is full-page. Consumer wor
 Do not weaken or remove this check — it is the only guard against silent mode-drift
 comparisons in audit workflows. See `src/capture.mjs` `detectModeDrifts()`.
 
-## Cold-compile first-capture timeout: retry once before diagnosing
+## Cold-compile warmup is built-in — consumers don't need retry wrappers
 
-The first Playwright capture in a session against a Vite/Astro/Next.js dev server can
-hit the `gotoTimeoutMs` (default 30s) because the dev server compiles on first request.
-The fix is a single retry, not an increased timeout. Consumers should wrap `captureScreenshots`
-in a try/catch and retry once on timeout errors. Library issue tracked at
-[sptk-visual-audit#4](https://github.com/SPTK-EPB/sptk-visual-audit/issues/4). Until
-library-level retry lands, document the consumer-side retry in the adapter.
+`captureScreenshots` performs a single throwaway navigation to the first page's
+URL after authentication, before the viewport loop (`warmup: true` by default,
+60s timeout). This lands the dev server's cold-compile cost outside the real
+captures so capture-phase timeouts are unambiguous signals of a real problem
+(slow auth, content race, dev server overloaded) rather than expected
+first-hit latency. Closed by [#4](https://github.com/SPTK-EPB/sptk-visual-audit/issues/4).
+
+Consumers should NOT re-add a try/catch retry wrapper around `captureScreenshots`
+— warmup targets the root cause (cold compile) and retry would hide genuine
+capture failures. If auditing production or pre-built URLs where no dev-server
+compile occurs, pass `warmup: false` to skip the extra navigation.
 
 ## Library fix flow: fix here, bump lockfile in consumer
 

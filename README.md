@@ -64,6 +64,8 @@ const result = await captureScreenshots({
                            // 'mobile'  = full-page <1024px, viewport at 1024+
                            // 'desktop' = full-page at 1024+, viewport below
   archive: true,           // rename existing .png to -before.png
+  warmup: true,            // default. One pre-loop navigation to warm dev-server
+                           // cold compile. Set false for production/staging URLs.
 });
 // → { captured, failed, overflowWarnings, sizeWarnings, outDir }
 ```

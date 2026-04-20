@@ -18,6 +18,7 @@ import { readPngDimensions } from './utils/png-dimensions.mjs';
 const DEFAULT_VIEWPORT_HEIGHT = 800;
 const DEFAULT_WAIT_MS = 4000;
 const DEFAULT_GOTO_TIMEOUT_MS = 30000;
+const DEFAULT_WARMUP_TIMEOUT_MS = 60000;
 const DESKTOP_MIN_WIDTH = 1024;
 const FULL_PAGE_MODES = new Set(['always', 'never', 'mobile', 'desktop', 'large']);
 const MODE_DRIFT_HEIGHT_RATIO = 1.2;
@@ -96,6 +97,13 @@ async function detectModeDrifts({ pages, viewports, outDir, fullPageMode, viewpo
  * @property {number} [viewportHeight]          Default 800.
  * @property {number} [waitMs]                  Default 4000.
  * @property {number} [gotoTimeoutMs]           Default 30000.
+ * @property {boolean} [warmup]                 Default true. One throwaway navigation to the
+ *                                              first page's URL before the capture loop, so
+ *                                              dev-server cold-compile cost lands outside the
+ *                                              real captures. Set false for production/staging
+ *                                              URLs where no dev-server compile occurs.
+ * @property {number} [warmupTimeoutMs]         Default 60000. Longer than gotoTimeoutMs to
+ *                                              accommodate 10-30s cold-compile navigations.
  * @property {(page: import('playwright').Page, ctx: { name: string, width: number, baseUrl: string }) => Promise<void>} [setup]
  *                                              Global per-viewport setup (page-level setup wins).
  * @property {(msg: string) => void} [log]      Default console.log.
@@ -122,6 +130,8 @@ export async function captureScreenshots(opts) {
     viewportHeight = DEFAULT_VIEWPORT_HEIGHT,
     waitMs = DEFAULT_WAIT_MS,
     gotoTimeoutMs = DEFAULT_GOTO_TIMEOUT_MS,
+    warmup = true,
+    warmupTimeoutMs = DEFAULT_WARMUP_TIMEOUT_MS,
     setup: globalSetup,
     log = console.log,
     warn = console.warn,
@@ -165,6 +175,27 @@ export async function captureScreenshots(opts) {
   log(`Authenticated.\n`);
 
   const pageEntries = Object.entries(pages);
+
+  if (warmup && pageEntries.length > 0) {
+    const [, firstConfig] = pageEntries[0];
+    const warmupUrl = `${baseUrl}${firstConfig.path}`;
+    log(`Warming dev server at ${warmupUrl}...`);
+    const warmupContext = await browser.newContext({
+      viewport: { width: viewports[0], height: viewportHeight },
+      ...(firstConfig.auth !== false ? { storageState } : {}),
+    });
+    const t0 = Date.now();
+    try {
+      const warmupPage = await warmupContext.newPage();
+      await warmupPage.goto(warmupUrl, { waitUntil: 'load', timeout: warmupTimeoutMs });
+      await warmupPage.close();
+      log(`Warmed in ${Date.now() - t0}ms.\n`);
+    } catch (err) {
+      warn(`Warmup failed after ${Date.now() - t0}ms: ${err.message} — proceeding\n`);
+    } finally {
+      await warmupContext.close();
+    }
+  }
 
   let captured = 0;
   let failed = 0;

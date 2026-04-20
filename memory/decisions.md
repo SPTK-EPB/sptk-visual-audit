@@ -39,6 +39,13 @@
 - **Tags**: api-surface, defaults, responsive-audit
 - **Issue**: [#5](https://github.com/SPTK-EPB/sptk-visual-audit/issues/5)
 
+## 2026-04-20 — Warmup default-on, no retry fallback
+
+- **Decision**: `captureScreenshots` does one throwaway navigation to the first page's URL after `authenticate()` succeeds (`warmup: true` by default). No retry-on-timeout is added as a fallback, even for captures that still time out after warmup.
+- **Rationale**: Retry hides genuine capture issues (slow auth, content races, overloaded dev servers). Warmup targets the actual root cause (cold-compile on first request) without that cost. Consumers who previously wrapped `captureScreenshots` in a try/catch retry loop should remove that wrapper — their captures will be more trustworthy. Shared-module cold compile is ~80% of first-hit latency, so one warmup covers the common case; per-route incremental compile is seconds, not tens.
+- **Tags**: api-surface, defaults, dev-experience
+- **Issue**: [#4](https://github.com/SPTK-EPB/sptk-visual-audit/issues/4)
+
 ## 2026-04-19 — Playwright as peer dependency
 
 - **Decision**: Declare Playwright as a peer dependency, not a regular dependency.

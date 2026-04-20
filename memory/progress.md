@@ -94,3 +94,38 @@ adopter was going to hit the same wall.
 - #1, #2 — Dependabot PRs
 - Tests still not bootstrapped; the shipped change was covered by an inline node -e
   truth table, not a committed regression test.
+
+## 2026-04-20 — Library-level warmup for cold-compile (session 3)
+
+Closed #4. Issue body explicitly recommended `warm-up only, default on` over retry
+— retry hides genuine capture issues (slow auth, content race, overloaded dev
+server), while warmup targets the actual root cause (dev server cold compile on
+first request). Pressure-tested the approach against alternatives (per-route
+warmup, opt-in warmup, retry fallback, `waitUntil: 'commit'`) before implementing.
+
+**Shipped:**
+
+- `src/capture.mjs`: `warmup: boolean = true` + `warmupTimeoutMs: number = 60000`
+  in `CaptureOptions`. One throwaway navigation to the first page's URL after
+  `authenticate()` succeeds, before the viewport loop. Uses the capture-path
+  auth context if the first page requires auth. Errors are swallowed with a
+  warning; duration logged for diagnostic value (cold: 15-30s, warm: 1-3s).
+- `README.md`: usage snippet shows `warmup: true` with inline guidance to pass
+  `false` for production/staging URLs.
+- `.claude/rules/sptk-visual-audit.md`: replaced "retry once before diagnosing"
+  rule with "warmup is built-in — consumers shouldn't re-add retry wrappers".
+  `.github/instructions/` mirror auto-synced.
+- `[CC]` staged for ADM skill propagation — `responsive-audit-workflow` still
+  documents the retry workaround.
+
+**Verification:**
+
+- `node --check` + import smoke test + `bun run test` (no committed tests, exits
+  0 via `|| true`) all green. Real correctness proof comes during Phase 1.b UDM
+  adoption.
+
+**Open:**
+
+- #1, #2 — Dependabot PRs (informational)
+- Phase 1.b — UDM adoption (blocked on UDM workspace)
+- Tests still not bootstrapped.
