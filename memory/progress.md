@@ -179,3 +179,73 @@ default width heuristic for populated-page adopters (UDM).
 - #11 (compareScreenshots pixelmatch wrapper)
 - #1, #2 — Dependabot PRs
 - Tests still not bootstrapped.
+
+## 2026-04-21 — Batch close (#8/#9/#10/#11) + test bootstrap (session 5)
+
+Five-task session: closed all 4 open enhancement issues and bootstrapped
+the first real test suite.
+
+**Shipped:**
+
+- **#8 closed** (`ca545a2`): `docs/ADAPTER.md` gained Pattern B (server-side
+  proxy auth) alongside the existing browser-held-cookie pattern. Unblocks
+  Smie Phase 2 adoption. Also documents the `bun run <script>` +
+  `.env.local` gotcha where child `node`-shim binaries re-exec and lose the
+  env — wrap with `bash -c 'set -a; . ./.env.local; set +a; exec <cmd>'`.
+- **#10 closed** (`e21c525`): `inspectLayout` `setup` hook. Mirrors
+  `captureScreenshots` setup contract. Ctx carries `{ path, width, baseUrl }`
+  (capture uses `name` since it iterates a registry). Enables tab-driven
+  DOM inspection without a separate Playwright session.
+- **#9 closed** (`406351d`): `captureScreenshots` `paths: string[]` option.
+  Ad-hoc URL paths auto-key from a slugified path+query form,
+  truncated at 60 chars, with `path-N` fallback on collision. Either
+  `pages` or `paths` must be non-empty; both compose. Entries default to
+  `auth: true`.
+- **#11 closed** (`5fa1600`): `compareScreenshots` pixelmatch wrapper.
+  New `src/compare.mjs`. Peer deps declared **optional** via
+  `peerDependenciesMeta` — library throws a clear "install these" error if
+  `pixelmatch`/`pngjs` are missing at call time. Returns `{ match,
+  diffPixels, diffPercent, width, height, diffImagePath? }`. Dimension
+  mismatch throws fatally.
+- **Tests bootstrapped** (`0ef6024`): 17 passing tests across
+  `overflow.test.mjs` (4), `png-dimensions.test.mjs` (6),
+  `compare.test.mjs` (7). `node --test`, no external test framework.
+  CI gates on `npm test`. First real test commit after 4 sessions of
+  inline-smoke-only verification.
+
+**Verification:**
+
+- `npm test` → 17/17 pass, 498ms.
+- CI green on push (run 24708960504, 13s): syntax check + import smoke +
+  unit tests.
+- All 4 issues auto-closed by `fixes #N` trailers.
+
+**Design decisions locked:**
+
+- Slugification regex `/[?&=]/g → -`, strip non-alphanum, collapse/trim
+  dashes, max 60 chars. See `slugifyPath()` in `src/capture.mjs`.
+- `compareScreenshots` peer deps are optional — consumers who don't need
+  regression diff pay zero install cost.
+- `inspectLayout` setup ctx uses `path` (not `name`) because it's a
+  single-URL surface.
+
+**Friction:**
+
+- `node --test src/**/*.test.mjs` unquoted — POSIX sh expanded only
+  2-deep and missed `src/compare.test.mjs`. Fixed by quoting the glob so
+  Node does its own expansion. Added to project rules.
+- Otherwise clean first-try execution across all 5 tasks.
+
+**Deferred:**
+
+- Dependabot PRs #1, #2 (actions/checkout 5→6, actions/setup-node 5→6)
+  — not explicitly approved in session, left for next session 2-min
+  merge decision.
+- Integration tests (full capture pipeline against a fixture HTTP
+  server) — documented as out-of-scope in `memory/tasks.md`. File as
+  a follow-up issue if demand materializes.
+
+**Open:**
+
+- #1, #2 — Dependabot PRs (next session)
+- Phase 1.b — UDM adoption (blocked on UDM workspace, ADM#197)

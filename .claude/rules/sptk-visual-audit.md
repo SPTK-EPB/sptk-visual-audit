@@ -81,6 +81,15 @@ UDM's). When fixing a false-positive, prefer per-page `sparseOk` over global
 disable: keeps the signal live for the majority of pages. Closed by
 [#7](https://github.com/SPTK-EPB/sptk-visual-audit/issues/7).
 
+## `node --test` glob must be quoted in package.json
+
+The test script is `"test": "node --test \"src/**/*.test.mjs\""` — the quotes
+are load-bearing. Unquoted `src/**/*.test.mjs` gets expanded by POSIX sh before
+Node sees it, and bash without `globstar` only matches 2 levels deep. That
+misses `src/*.test.mjs` (e.g. `src/compare.test.mjs`). Quoting passes the
+literal pattern through to Node, which does its own recursive glob expansion
+(Node 21+). Don't "simplify" by dropping the quotes.
+
 ## Keep library generic: project logic stays in the adapter
 
 The library provides: capture pipeline, overflow detection, layout inspection, PNG
