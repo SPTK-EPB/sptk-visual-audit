@@ -1,59 +1,96 @@
-# Copilot instructions — @sptk-epb/visual-audit
+<!-- Generated from CLAUDE.md by scripts/harness/sync-claude-to-copilot-instructions.sh -- do not edit directly -->
+<!-- Source of truth: CLAUDE.md in this repo. Copilot-specific additions: .github/copilot-instructions.local.md -->
 
-This is a shared Playwright visual-audit library. Read `AGENTS.md` for the full
-project overview; this file surfaces the critical rules for Copilot.
+# @sptk-epb/visual-audit — CLAUDE.md
 
-## Critical rules
+Shared Playwright visual-audit library. Consumed by all SPTK-EPB web projects via
+`git+https://github.com/SPTK-EPB/sptk-visual-audit.git`. Exports screenshot capture,
+DOM layout inspection, and overflow detection. Each consumer provides an auth adapter
+and page registry — the library owns the pipeline, consumers own the auth.
 
-1. **ESM only.** Every file ends in `.mjs`. Imports use explicit extensions
-   (`'./utils/overflow.mjs'`). No `.ts`, no default-export Node CJS.
+## Commands
 
-2. **Library boundary.** No CLI in this repo. No filesystem writes outside
-   `outDir`. No env var reads. Auth is an adapter the consumer passes in.
-
-3. **Playwright is a peer dep.** Never `import` from `playwright` at module
-   top-level except in engine files (`capture.mjs`, `inspect.mjs`). Utilities
-   (`utils/overflow.mjs`, `utils/describe.mjs`) use Playwright types via JSDoc
-   only — they run against a `Page` passed by the caller.
-
-4. **Browser context code lives inside `page.evaluate()`.** Any function that
-   reaches `document`/`window` must be re-defined inside the `evaluate` callback
-   — module-level helpers are not available in the browser context.
-   The `describeElement` utility exists as an npm export AND is duplicated inline
-   inside `inspect.mjs`'s `page.evaluate()`. Keep them in sync when editing.
-
-5. **Finally-block teardown.** Every engine that launches a browser closes it
-   in a `finally`. Nested contexts also close in their own `finally`.
-
-## Architecture
-
-```
-src/index.mjs          → re-exports the public surface
-src/capture.mjs        → captureScreenshots(opts) engine
-src/inspect.mjs        → inspectLayout(opts), inspectPage(page, selectors), renderLayoutReport(...)
-src/utils/overflow.mjs → detectOverflow(page)
-src/utils/describe.mjs → describeElement(el) — for use inside page.evaluate()
+```bash
+bun install                        # Install dev deps (playwright included as devDep)
+bunx playwright install chromium   # Install Chromium (required post-install)
+bun test                           # Run tests (node --test src/**/*.test.mjs)
+node --check src/**/*.mjs          # Syntax check (CI gate)
+node -e "import('./src/index.mjs').then(m => console.log(Object.keys(m)))"
+                                   # Import smoke test (CI gate)
 ```
 
-## Versioning
+**Local iteration with a consumer**: `npm link` in this repo, then
+`npm link @sptk-epb/visual-audit` in the consumer. Or push changes to `main` and
+run `npm install @sptk-epb/visual-audit` in the consumer (lockfile-only bump, no
+version change needed).
 
-Pre-1.0. No public API stability guarantee — but every breaking change to
-`captureScreenshots` or `inspectLayout` options needs a `BREAKING:` prefix in
-the commit message and a README note.
+## Stack
 
-## Testing
+Node.js 22+ (required; see `engines` in package.json), Playwright 1.45+ (peer dep),
+ESM only (`.mjs` throughout), JSDoc for types (no TypeScript, no tsc step).
+Bun for development; consumers may use Bun or Node to run the library.
 
-No suite yet. Phase 1 correctness is proven by wiring UDM to consume this
-library and running the existing audit pipeline unchanged.
+## Project Layout
 
-## Before submitting
+```
+src/index.mjs          Public API — re-exports only. This is the API surface.
+src/capture.mjs        captureScreenshots() — multi-viewport screenshot engine
+src/inspect.mjs        inspectLayout() — DOM overflow/grid/selector diagnostic
+src/utils/overflow.mjs detectOverflow(page) — horizontal overflow detection
+src/utils/describe.mjs describeElement(el) — element descriptor for page.evaluate()
+src/utils/png-dimensions.mjs  readPngDimensions(path)
+docs/ADAPTER.md        Auth adapter + page registry contract + examples
+AGENTS.md              Agent-readable project overview and conventions
+```
 
-- `node --check src/**/*.mjs` — syntax
-- README + AGENTS.md reflect the change
-- Option additions to `captureScreenshots` / `inspectLayout` documented with JSDoc
+## Critical Rules
 
-## What not to modify
+1. **Public API stability** — `src/index.mjs` exports are the API surface. Adding a
+   new export is safe. Renaming or removing any export is a breaking change that
+   immediately breaks every consumer's audit scripts. Changes to function signatures
+   (`opts` field renames, removed options, changed defaults) are also breaking.
 
-- `package.json` `exports` map without human review — consumers pin these.
-- The `authenticate(browser, baseUrl) => storageState` signature — consumers depend on it.
-- `PageConfig` shape (`{ path, auth?, setup? }`) — same reason.
+2. **Git-ref consumption — no semver releases** — consumers install via
+   `npm install git+https://github.com/SPTK-EPB/sptk-visual-audit.git`. There is no
+   npm registry publication. Pushing to `main` is the release. Consumers update by
+   running `npm install @sptk-epb/visual-audit` in their repo — this bumps only the
+   lockfile (resolved SHA), `package.json` stays unchanged. Never bump the `version`
+   field in `package.json` as a release mechanism.
+
+3. **Repo must stay public** — consumers' CI pulls via `git+https`. Private repos
+   fail in CI with `Permission denied (publickey)` because npm rewrites the URL to
+   `git+ssh://` in the lockfile. See the `private-git+https-breaks-CI` learned rule.
+
+4. **Breaking changes require coordinated rollout** — before merging: (a) file an
+   issue labeled `breaking-change`, (b) open PRs across all active adopters (see
+   Adopters table below), (c) merge adopter PRs first or simultaneously.
+
+5. **No project-specific logic** — the library must remain generic. Auth adapters,
+   page registries, fixture seeding, and project-specific CSS selectors live in the
+   consumer repo, not here.
+
+## Adopters
+
+| Repo | Status | Issue |
+|------|--------|-------|
+| android-device-manager | Phase 1.b — in progress | [#197](https://github.com/SPTK-EPB/android-device-manager/issues/197) |
+| dugnad-dashboard | Phase 2 — pending | [#28](https://github.com/SPTK-EPB/dugnad-dashboard/issues/28) |
+| smie | Phase 2 — pending | [#67](https://github.com/SPTK-EPB/smie/issues/67) |
+
+Rollout tracked at [command-center#76](https://github.com/SPTK-EPB/command-center/issues/76).
+
+## Boundaries
+
+### Ask first
+- Adding new options to `captureScreenshots` or `inspectLayout` (API surface)
+- Adding new exports to `src/index.mjs`
+- Changing `fullPageMode` defaults (every consumer is affected)
+- Adding npm dependencies (keeps the dep surface minimal for consumers)
+- Changes to `docs/ADAPTER.md` (consumers rely on the adapter contract)
+
+### Never
+- Remove or rename existing exports from `src/index.mjs` without a breaking-change issue
+- Add project-specific logic (auth flows, fixture seeding, per-project selectors)
+- Commit `node_modules/` or any consumer secrets
+- Force push
+- Make the repo private
