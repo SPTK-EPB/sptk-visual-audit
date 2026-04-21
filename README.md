@@ -137,6 +137,42 @@ await inspectLayout({
 // Prints an overflow / wide-element / grid-container report to stdout.
 ```
 
+### Compare screenshots
+
+Answer "is this PNG diff a real regression?" with a binary check instead of
+eyeballing file sizes. Pairs with `captureScreenshots` for before/after
+workflows.
+
+```js
+import { compareScreenshots } from '@sptk-epb/visual-audit';
+
+const result = await compareScreenshots({
+  baselinePath: './tmp/screenshots/baseline/index-360.png',
+  currentPath:  './tmp/screenshots/current/index-360.png',
+  tolerance: 0.1,                       // pixelmatch threshold (0..1). Default 0.1.
+                                         // 0.1 absorbs PNG compression variance.
+                                         // ≥0.5 would hide real drift.
+  diffOutputPath: './tmp/diffs/index-360-diff.png',  // Optional red-channel overlay.
+});
+// → { match, diffPixels, diffPercent, width, height, diffImagePath? }
+
+if (!result.match) {
+  console.error(`regression: ${result.diffPixels} px drift (${result.diffPercent * 100}%)`);
+}
+```
+
+`pixelmatch` and `pngjs` are optional peer dependencies — install them only
+if you use this helper:
+
+```bash
+npm install pixelmatch pngjs
+# or: bun add pixelmatch pngjs
+```
+
+The library throws a clear error if either package is missing at call time.
+Dimension mismatches throw fatally (mismatched sizes mean before/after were
+captured under different conditions — the diff would be meaningless).
+
 ## Adapter contract
 
 Consumers provide two things:
