@@ -39,6 +39,58 @@ function minSizeForWidth(width) {
   return 50 * 1024;
 }
 
+const PATH_SLUG_MAX_LEN = 60;
+
+/**
+ * Slugify a URL path + query into a filename-safe key.
+ * Preserves structure (slashes → dashes, `=` → `-`, `&` → `-`) and strips the
+ * leading slash. Truncates at PATH_SLUG_MAX_LEN.
+ *
+ * Examples:
+ *   /my/devices/new              → my-devices-new
+ *   /my/devices/new?token=abc    → my-devices-new-token-abc
+ *   /                            → (empty — caller falls back to path-N)
+ */
+function slugifyPath(path) {
+  const slug = path
+    .replace(/^\/+/, '')
+    .replace(/[?&=]/g, '-')
+    .replace(/[^a-zA-Z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+  return slug.slice(0, PATH_SLUG_MAX_LEN).replace(/-+$/, '');
+}
+
+/**
+ * Merge ad-hoc `paths` into the named `pages` registry. Each path entry becomes
+ * a page-config with the slugified path as its key. On slug collision (with
+ * existing pages or other paths), falls back to `path-<N>`.
+ *
+ * @param {Record<string, PageConfig>|undefined} pages
+ * @param {string[]|undefined} paths
+ * @returns {Record<string, PageConfig>}
+ */
+function mergePagesAndPaths(pages, paths) {
+  const merged = { ...(pages ?? {}) };
+  if (!paths || paths.length === 0) return merged;
+  let fallbackIdx = 0;
+  for (const path of paths) {
+    if (typeof path !== 'string' || !path.startsWith('/')) {
+      throw new Error(`paths entries must start with /, got ${JSON.stringify(path)}`);
+    }
+    let key = slugifyPath(path);
+    if (!key || key in merged) {
+      do {
+        fallbackIdx++;
+        key = `path-${fallbackIdx}`;
+      } while (key in merged);
+    }
+    merged[key] = { path };
+  }
+  return merged;
+}
+
 /**
  * Classify an existing PNG's capture mode from its height relative to the viewport.
  * Viewport-only captures are ~viewportHeight tall; full-page captures are typically
@@ -87,7 +139,17 @@ async function detectModeDrifts({ pages, viewports, outDir, fullPageMode, viewpo
  * @typedef {Object} CaptureOptions
  * @property {string} baseUrl
  * @property {number[]} viewports               Widths, e.g. [360, 1280].
- * @property {Record<string, PageConfig>} pages Page registry.
+ * @property {Record<string, PageConfig>} [pages] Page registry. Either `pages`
+ *                                              or `paths` (or both) must be
+ *                                              provided.
+ * @property {string[]} [paths]                 Ad-hoc URL paths to capture
+ *                                              without registering them in
+ *                                              `pages`. Each string must start
+ *                                              with `/`; query strings are
+ *                                              supported. Filenames derive
+ *                                              from a slugified path (falls
+ *                                              back to `path-N` on collision).
+ *                                              Entries default to `auth: true`.
  * @property {(browser: import('playwright').Browser, baseUrl: string) => Promise<object>} authenticate
  *                                              Returns Playwright storageState.
  * @property {string} outDir                    Output directory for PNGs.
@@ -133,6 +195,7 @@ export async function captureScreenshots(opts) {
     baseUrl,
     viewports,
     pages,
+    paths,
     authenticate,
     outDir,
     fullPageMode = 'mobile',
@@ -156,9 +219,15 @@ export async function captureScreenshots(opts) {
   if (!Array.isArray(viewports) || viewports.length === 0) {
     throw new Error('viewports must be a non-empty number[]');
   }
-  if (!pages || typeof pages !== 'object') {
-    throw new Error('pages registry is required');
+  if (paths !== undefined && !Array.isArray(paths)) {
+    throw new Error('paths must be a string[] (or omitted)');
   }
+  const hasPages = pages && typeof pages === 'object' && Object.keys(pages).length > 0;
+  const hasPaths = Array.isArray(paths) && paths.length > 0;
+  if (!hasPages && !hasPaths) {
+    throw new Error('pages registry or paths array is required (at least one non-empty)');
+  }
+  const effectivePages = mergePagesAndPaths(pages, paths);
   if (typeof authenticate !== 'function') {
     throw new Error('authenticate adapter is required');
   }
@@ -166,7 +235,7 @@ export async function captureScreenshots(opts) {
   await mkdir(outDir, { recursive: true });
 
   if (archive && !forceRearchive) {
-    const drifts = await detectModeDrifts({ pages, viewports, outDir, fullPageMode, viewportHeight });
+    const drifts = await detectModeDrifts({ pages: effectivePages, viewports, outDir, fullPageMode, viewportHeight });
     if (drifts.length > 0) {
       error(`\nCapture mode drift detected in ${drifts.length} file(s):`);
       for (const d of drifts) {
@@ -186,7 +255,7 @@ export async function captureScreenshots(opts) {
   const storageState = await authenticate(browser, baseUrl);
   log(`Authenticated.\n`);
 
-  const pageEntries = Object.entries(pages);
+  const pageEntries = Object.entries(effectivePages);
 
   if (warmup && pageEntries.length > 0) {
     const [, firstConfig] = pageEntries[0];

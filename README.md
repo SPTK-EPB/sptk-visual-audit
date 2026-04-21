@@ -89,6 +89,31 @@ export const PAGES = {
 
 Precedence: per-page `sparseOk` > global `minSizeKb: 0` > global `minSizeKb: N` > built-in width heuristic.
 
+#### Ad-hoc paths
+
+For one-off captures (post-submit banners, flash-message URLs, deep links with
+query params) that don't belong in a permanent registry, pass `paths` alongside
+or instead of `pages`:
+
+```js
+await captureScreenshots({
+  baseUrl: 'http://localhost:3000',
+  viewports: [360, 1280],
+  pages: PAGES,                // Optional when `paths` is provided.
+  paths: [
+    '/my/devices/new?token=abc&label=demo-laptop',
+    '/my/apps?ok=deployed&id=123',
+  ],
+  authenticate,
+  outDir: './tmp/screenshots/token-issued',
+});
+```
+
+Filenames derive from slugified paths (`/my/devices/new?token=abc` →
+`my-devices-new-token-abc-360.png`), truncated at 60 chars. On collision with
+existing `pages` keys (or other paths), falls back to `path-1`, `path-2`, etc.
+Entries default to `auth: true`.
+
 ### Inspect layout
 
 ```js
