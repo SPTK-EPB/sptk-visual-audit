@@ -249,3 +249,42 @@ the first real test suite.
 
 - #1, #2 — Dependabot PRs (next session)
 - Phase 1.b — UDM adoption (blocked on UDM workspace, ADM#197)
+
+## 2026-04-21 — Dependabot cleanup (session 6)
+
+Cleared the two open Dependabot PRs deferred from session 5. Short session,
+single task.
+
+**Shipped:**
+
+- **#1 merged** (`372e406`, squash): `actions/checkout` 5→6. Original CI run
+  failed at 2026-04-19 with `Cannot find package 'playwright'` in the import
+  smoke test. Root cause: PR #1 opened 2 min BEFORE commit `88d0443`
+  (ci: install playwright for smoke-test import) landed on main. Fresh
+  `@dependabot rebase` + auto CI run turned green; merged cleanly.
+- **#2 merged** (`03316df`, squash): `actions/setup-node` 5→6. First rebase
+  green, but merging #1 invalidated #2's base (both edited `ci.yml`) — had
+  to rebase AGAIN. Second run green, merged.
+
+**Verification:**
+
+- Post-merge main CI green (run 24710125456, 8s).
+- Local `git pull --rebase` clean, no conflicts.
+
+**Friction:**
+
+- `gh auth status` began timing out mid-session despite `curl
+  https://api.github.com/` returning 200. Pivoted to
+  `GH_TOKEN=$GH_PAT gh ...` sourced from `~/secrets.env`. First `gh` call
+  in a parallel block cascade-cancelled its sibling.
+- `gh run view --log-failed` didn't work with the same auth state. Fetched
+  the failed-job log via raw `curl` against
+  `/repos/<owner>/<repo>/actions/jobs/{id}/logs` — worked cleanly.
+- PR #2's stale-base after #1 merged was expected (shared `ci.yml`); one
+  extra `@dependabot rebase` cycle resolved it. Learned-rule candidate
+  staged for CC.
+
+**Open:**
+
+- Phase 1.b — UDM adoption (blocked on UDM workspace, ADM#197)
+- Phase 2 — exhaustive tab walk (ready to start when prioritized)
