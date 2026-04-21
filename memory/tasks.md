@@ -37,10 +37,21 @@
 - Deprecate individual `capture-screenshots.mjs` files across repos
 - Verify each consumer has migrated fully before removal
 
-## Tests (not yet started)
+## Tests
 
-- Smoke test: serve a local HTML fixture, run `captureScreenshots` against it,
-  assert file counts + presence of overflow warnings when expected
-- Unit tests: `detectOverflow` and `describeElement` against jsdom
-- Adapter contract tests: fake `authenticate` that returns various
-  storageState shapes, confirm library handles them
+### Bootstrapped (session 5, 2026-04-21)
+
+- `src/utils/overflow.test.mjs` — `detectOverflow` with stubbed Page (4 tests)
+- `src/utils/png-dimensions.test.mjs` — real PNG fixtures via pngjs (6 tests)
+- `src/compare.test.mjs` — `compareScreenshots` full-case coverage (7 tests)
+- `npm test` runs `node --test "src/**/*.test.mjs"` — quoted glob so Node's
+  own expansion picks up files at any depth (shell globstar misses
+  `src/*.test.mjs`).
+- CI gates on `npm test` after the syntax-check + import-smoke steps.
+
+### Not yet started (file as a follow-up issue if demand materializes)
+
+- Integration tests: serve a local HTML fixture, run `captureScreenshots`
+  against it end-to-end (needs fixture HTTP server). Out of current scope.
+- Adapter contract tests: fake `authenticate` with various storageState
+  shapes, confirm library handles them. Out of current scope.

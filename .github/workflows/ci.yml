@@ -25,4 +25,6 @@ jobs:
           done
         shell: bash
       - name: Import smoke test
-        run: node -e "import('./src/index.mjs').then(m => { if (!m.captureScreenshots || !m.inspectLayout) throw new Error('missing exports'); console.log('exports ok'); })"
+        run: node -e "import('./src/index.mjs').then(m => { if (!m.captureScreenshots || !m.inspectLayout || !m.compareScreenshots) throw new Error('missing exports'); console.log('exports ok'); })"
+      - name: Unit tests
+        run: npm test
