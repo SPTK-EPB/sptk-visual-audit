@@ -102,6 +102,12 @@ await inspectLayout({
   needsAuth: true,
   authenticate,
   selectors: ['main', '[role=grid]', 'header'],
+  // Drive UI into a non-default state before inspection — tab clicks, dialogs,
+  // row selection, etc. Mirrors captureScreenshots' setup contract.
+  setup: async (page, { path, width, baseUrl }) => {
+    await page.click('[role=tab][aria-label="Anomaly"]');
+    await page.waitForSelector('[data-testid=anomaly-panel]');
+  },
 });
 // Prints an overflow / wide-element / grid-container report to stdout.
 ```

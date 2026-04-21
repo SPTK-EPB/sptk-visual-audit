@@ -205,6 +205,11 @@ export function renderLayoutReport(url, width, report, limits, log = console.log
  * @property {number} [viewportHeight]
  * @property {number} [waitMs]
  * @property {number} [gotoTimeoutMs]
+ * @property {(page: import('playwright').Page, ctx: { path: string, width: number, baseUrl: string }) => Promise<void>} [setup]
+ *                                              Runs after navigation + waitMs, before DOM extraction.
+ *                                              Use for tabbed pages, dialogs, or any state-dependent UI
+ *                                              that must be driven into a non-default state before
+ *                                              inspection. Mirrors captureScreenshots' setup contract.
  * @property {(msg: string) => void} [log]
  * @property {boolean} [print]                  Default true. If false, returns report without printing.
  */
@@ -227,6 +232,7 @@ export async function inspectLayout(opts) {
     viewportHeight = DEFAULT_VIEWPORT_HEIGHT,
     waitMs = DEFAULT_WAIT_MS,
     gotoTimeoutMs = DEFAULT_GOTO_TIMEOUT_MS,
+    setup,
     log = console.log,
     print = true,
   } = opts;
@@ -259,6 +265,9 @@ export async function inspectLayout(opts) {
     try {
       await page.goto(url, { waitUntil: 'load', timeout: gotoTimeoutMs });
       await page.waitForTimeout(waitMs);
+      if (typeof setup === 'function') {
+        await setup(page, { path, width, baseUrl });
+      }
       const report = await inspectPage(page, selectors);
       if (print) {
         renderLayoutReport(url, width, report, limits, log);
