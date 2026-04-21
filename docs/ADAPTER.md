@@ -6,6 +6,28 @@ pages to capture.
 
 ## Auth adapter
 
+Two patterns are supported, depending on how the consumer's app holds session
+state:
+
+- **Pattern A — browser-held cookie**: the adapter signs in via the app's API,
+  captures the cookie into Playwright's `storageState`, and the browser
+  replays it on every request. Use when the backend issues cookies directly
+  to the browser (most apps).
+- **Pattern B — server-side proxy auth**: the dev server itself holds the
+  session (via env var), attaches it to outgoing fetches to the backend, and
+  the browser never sees a cookie. The adapter probes readiness and returns
+  an empty `storageState`.
+
+### Contract (both patterns)
+
+- Must return a value compatible with `browser.newContext({ storageState })`.
+  An empty `{ cookies: [], origins: [] }` is valid.
+- Must throw on failure — the library treats a thrown error as fatal.
+- Must not leave `browser.contexts()` open (library owns teardown).
+- Must never log secrets (the library does NOT redact its logs).
+
+### Pattern A — browser-held cookie
+
 ```js
 /**
  * @param {import('playwright').Browser} browser
@@ -27,12 +49,45 @@ async function authenticate(browser, baseUrl) {
 }
 ```
 
-### Contract
+### Pattern B — server-side proxy auth
 
-- Must return a value compatible with `browser.newContext({ storageState })`.
-- Must throw on failure — the library treats a thrown error as fatal.
-- Must not leave `browser.contexts()` open (library owns teardown).
-- Must never log secrets (the library does NOT redact its logs).
+Some dev servers (e.g. Astro on Cloudflare Workers) hold the session cookie
+themselves — typically loaded from `DEV_SESSION_COOKIE` in `.env.local` — and
+attach it server-side on outgoing fetches to the backend API. The browser
+never holds a cookie; there is nothing for the library to inject into
+`storageState`. The adapter's job is to confirm the dev server is actually
+authenticated (so the capture doesn't silently hit a sign-in redirect) and
+return an empty state.
+
+```js
+/**
+ * @param {import('playwright').Browser} _browser  Unused — no cookie to capture.
+ * @param {string} baseUrl
+ * @returns {Promise<object>} Empty Playwright storageState
+ */
+async function authenticate(_browser, baseUrl) {
+  // Probe a known-authenticated page via the dev server. If the dev server's
+  // session cookie isn't loaded, the response redirects to /signin (or returns
+  // a public shell) and the probe throws.
+  const res = await fetch(`${baseUrl}/my/devices`, { redirect: 'manual' });
+  if (res.status === 302 || res.status === 303) {
+    throw new Error(
+      `Dev server not authenticated: ${baseUrl}/my/devices redirected to ${res.headers.get('location')}. ` +
+        `Set DEV_SESSION_COOKIE in .env.local and restart the dev server.`
+    );
+  }
+  if (!res.ok) throw new Error(`Probe failed (${res.status})`);
+  return { cookies: [], origins: [] };
+}
+```
+
+Canonical reference: [dugnad-dashboard/audit/auth.mjs](https://github.com/SPTK-EPB/dugnad-dashboard/blob/main/audit/auth.mjs).
+
+Gotcha: `bun run <script>` populates `.env.local` vars in Bun's own
+`process.env`, but child `node`-shim binaries (`astro`, `vite`, `next`)
+re-exec via their shebang and lose those vars. Wrap the dev script with
+`bash -c 'set -a; [ -f .env.local ] && . ./.env.local; set +a; exec <cmd>'`
+so the server process actually sees `DEV_SESSION_COOKIE`.
 
 ### Local vs staging
 
