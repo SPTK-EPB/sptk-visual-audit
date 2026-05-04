@@ -15,6 +15,7 @@ Before running the end-session workflow, evaluate this session for improvements:
 3. **Rule contradictions** — Did any rule or instruction conflict with what we actually did? Flag for cleanup.
 4. **Patterns worth capturing** — Did we establish an approach that should be reusable? Note for skill promotion or shared learnings.
 5. **Tooling gaps** — Did you work around a missing MCP tool, missing script, or manual step that could be automated?
+6. **Command outliers** — Run `python3 ~/scripts/infra/session-cmd-metrics.py --report` and check whether THIS session's `/start-session` or `/end-session` exceeded p95 for duration_sec or tool_calls. If yes, identify which step bloated and propose a command/rule fix. Skip if within p50.
 
 IMPORTANT: Capture every observation, even minor — small improvements compound. But CAPTURE ≠ DEFER. Apply the **two-minute rule** first: items trivially fixable in <2 min get done in this session (rule update, doc fix, comment in an issue, one-line script tweak). Items that need cross-session context, design decisions, or non-trivial work get filed as GitHub issues OR added to the carried-tasks list. Items processed via the two-minute rule are NOT carried forward — they're DONE. The carry list is for genuinely-deferred work, not for everything observed.
 
