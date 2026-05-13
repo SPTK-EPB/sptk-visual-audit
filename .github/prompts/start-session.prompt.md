@@ -39,6 +39,17 @@ In focused workspaces, this means batching as many of the post-sync startup prob
 
 In CC, this means batching the post-sync read-only health-check fan-out (steps 4, 5, 5b, 5c, 5d, 5e, 5f, 5g, 5h, 5i, 5j, 5k, 6, 7, 8, 9, 9b, 9c) as several parallel batches grouped by exit-code safety. Scripts that exit non-zero on findings (`proxmox-health-check.sh` exit 2 on ALERT, `billing-check.py --auth-probe` exit 2 on 401, `security-triage.py --quiet` may print ACTION but exits 0, `secrets-env-lint --quiet` exits 1 on findings) MUST run alone or be bundled only with other exit-non-zero scripts — never with read-safe siblings. Per the cascade-cancel learned-rule, exit-non-zero in one parallel-block sibling cancels the others.
 
+## MANDATORY: Visible tool-result panes are current state
+
+If VS Code opens a terminal-result pane, generated-output pane, or similar result surface while `/start-session` is running, treat that pane as the current state of the just-finished step.
+
+Do not keep waiting on the global `Processing` spinner if the visible pane already shows terminal output, an `exit`, or enough information to act. Inspect the visible result first, then either:
+
+- synthesize and continue immediately if the step is clearly complete, or
+- run one narrow underlying status check if the pane is ambiguous.
+
+Do not launch duplicate watcher loops or restate stale progress after a visible result pane opens. The pane is a state transition, not just UI noise.
+
 ## Watchdog contract (cc#168)
 
 The `~/.claude/hooks/start-session-watchdog.sh` hook mechanically enforces the "After sync, fan out immediately" rule. It tracks a per-session phase machine via `~/.local/state/claude-hooks/start-session/<session>.phase`:
