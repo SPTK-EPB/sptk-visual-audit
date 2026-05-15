@@ -12,11 +12,33 @@ jobs:
     runs-on: [self-hosted, avno]
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
+          cache: pnpm
+      - name: Pre-install diagnostics (cc#97 pilot baseline)
+        run: |
+          echo "pnpm version: $(pnpm --version)"
+          echo "pnpm store path: $(pnpm store path 2>/dev/null || echo 'not-yet-initialized')"
+          echo "rootfs before install:"
+          df -h /home | tail -1
+          echo "node_modules size before install:"
+          du -sh node_modules 2>/dev/null || echo "no prior node_modules"
+        shell: bash
       - name: Install deps (for peer-dep smoke test)
-        run: npm install --no-audit --no-fund
+        run: pnpm install --frozen-lockfile
+      - name: Post-install diagnostics (cc#97 pilot)
+        run: |
+          echo "pnpm store after install:"
+          du -sh $(pnpm store path) 2>/dev/null || echo "no store"
+          echo "node_modules size after install:"
+          du -sh node_modules
+          echo "rootfs after install:"
+          df -h /home | tail -1
+        shell: bash
       - name: Syntax check (node --check)
         run: |
           shopt -s globstar
@@ -28,4 +50,4 @@ jobs:
       - name: Import smoke test
         run: node -e "import('./src/index.mjs').then(m => { if (!m.captureScreenshots || !m.inspectLayout || !m.compareScreenshots) throw new Error('missing exports'); console.log('exports ok'); })"
       - name: Unit tests
-        run: npm test
+        run: pnpm test
