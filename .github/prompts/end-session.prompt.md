@@ -6,6 +6,10 @@ agent: "agent"
 <!-- Mirrored from ~/.claude/commands/end-session.md by scripts/harness/sync-commands-to-prompts.sh -- do not edit directly -->
 We will continue in a new session. Execute session evaluation and end steps:
 
+> **Invocation note:** If you arrived here by typing `/end-session` or by selecting an "End session" option, the Skill tool has already loaded this file. Do NOT execute end-session steps from memory shortcuts — invoke the Skill tool with `skill: "end-session"` so this file's contract drives the flow. The self-improvement evaluation below is the part most often skipped when run from memory.
+>
+> **Workspace divergence:** CC workspace (`$HOME`) follows `.claude/rules/cc-session-workflow.md`; focused workspaces follow `.claude/rules/session-workflow.md`. The sections below describe the shared self-improvement + validator contract; workspace-specific commit/push/sync/satellite-propagation steps live in those workflow files.
+
 ## Self-improvement evaluation
 
 Before running the end-session workflow, evaluate this session for improvements:

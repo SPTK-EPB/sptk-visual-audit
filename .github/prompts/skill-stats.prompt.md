@@ -22,7 +22,10 @@ Try the direct path first with `--max-time 5`. If the curl times out or refuses,
 ## API key
 
 ```bash
-AGENT_OBS_KEY=$(grep '^AGENT_OBS_API_KEY=' ~/secrets.env | cut -d= -f2-)
+set -a
+. ~/secrets.env
+set +a
+AGENT_OBS_KEY="$AGENT_OBS_API_KEY"
 ```
 
 If `~/secrets.env` doesn't exist locally (some satellite contexts), fall back to reading it via the same SSH jump used for the curl.
@@ -85,5 +88,5 @@ For the never-loaded computation, list `~/.claude/skills/` (one dir per skill) a
 ## Notes
 
 - This is Phase 2 of cc#191 (demand-driven skill rotation). Phase 3 will weight `skill-rotation.sh check` by these stats. Phase 4 will add a hard-stale prompt at skill-load time.
-- The API currently exposes ONLY explicit `Skill` tool-call events (per agent-obs#21). Reminder-derived skill loads (auto-triggered via system reminders) are NOT yet captured — tracked at agent-obs#22. If a user expects a skill to show high usage but it shows low/zero, the gap is likely reminder-derived loads not yet counted.
-- Data freshness: agent-obs on CT 252 only sees its own `~/.claude/projects/` — fleet-wide transcripts (laptop + satellites) are not synced as of 2026-05-14. Tracked at agent-obs#23. Never-loaded counts may be inflated until this is resolved. Until then, the output represents "what CT 252 has seen" rather than "what the fleet has loaded".
+- The API currently exposes ONLY explicit `Skill` tool-call events (per agent-obs#21). That is the supported analytics contract. Reminder-derived skill loads (auto-triggered via system reminders) are intentionally not counted; agent-obs#22 was closed after verifying there is no transcript-backed contract for those events.
+- Data freshness: CT 252 now watches fleet-wide transcript roots under `/home/copilot/transcripts` (`devsat1`, `devsat2`, `devsat3`, `laptop`, `legacy`). The old CT-252-local-only sync gap from agent-obs#23 is operationally resolved. Interpret the output as fleet-wide explicit `Skill` usage, not just CT-252-local history.

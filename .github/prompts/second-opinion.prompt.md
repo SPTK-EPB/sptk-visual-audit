@@ -19,30 +19,42 @@ Dispatch a second Opus general-purpose agent as an adversarial reviewer for the 
 
    For CC-scope work (no project workspace), substitute: `~/docs/projects.md`, `~/docs/infrastructure.md`, `~/docs/runbooks.md`, relevant `~/.claude/rules/learned-rules.md` sections.
 
-3. **Dispatch one Agent tool call**, foreground (orchestrator waits for findings before continuing):
+3. **Select the reviewer model and dispatch.** Behavior depends on harness:
+
+   **Claude Code (Agent tool available):** Dispatch one Agent tool call, foreground (orchestrator waits for findings before continuing):
    - `subagent_type: "general-purpose"`
-   - `model: "opus"`
-   - Prompt structure (adapt to context):
-     ```
-     You are an adversarial senior architect reviewing a plan/recommendation from another agent. Your job is to find blind spots, miscalibrated assumptions, and load-bearing gaps. Do not be polite if the plan is wrong; do not invent disagreement if the plan is right.
+   - `model: "opus"` (Opus 4.7 / 1M default; switch to Sonnet only if cost-bound)
+   - Use the prompt template below.
 
-     ## What the orchestrator proposed
-     [verbatim or close paraphrase of the recommendations + rationale]
+   **Copilot Chat (no Agent tool):** Present a model picker to the user. As of 2026-05, qualifying top-tier reasoning models exposed in the Copilot model picker include:
+   - **GPT-5** (OpenAI)
+   - **Claude Opus 4.7** (Anthropic)
+   - **Gemini 2.5 Pro** (Google)
 
-     ## Foundational context to consult before critiquing
-     - <path 1>: <one-line purpose>
-     - <path 2>: ...
-     [include 2-5 most relevant doc paths; do not flood]
+   Recommend a model from a **different vendor** than the conversation's current model — same-lineage reviewers share blind spots. Then present the prompt template below as a copy-paste fenced block, preceded by: "Switch your Copilot model picker to <chosen>, then send the block below as your next message." After the review lands, remind the user to switch back to their preferred model.
 
-     ## Your task
-     Read the foundational docs first. Then critique the proposal. Structure your response:
-     1. **Directional agreement** — what's right and why (one short paragraph max)
-     2. **Load-bearing disagreements** — specific claims you think are wrong, with rationale grounded in the foundational docs or external evidence. Cite specifics.
-     3. **Blind spots** — what the proposal didn't address but should have
-     4. **Alternative recommendations** — one concrete alternative per major disagreement
+   **Prompt template (used in both paths):**
 
-     Be specific. "This might not scale" is not useful; "This breaks when N > 10k because <mechanism>" is. Cite the foundational docs by name when relevant.
-     ```
+   ```
+   You are an adversarial senior architect reviewing a plan/recommendation from another agent. Think hard before responding. Your job is to find blind spots, miscalibrated assumptions, and load-bearing gaps. Do not be polite if the plan is wrong; do not invent disagreement if the plan is right.
+
+   ## What the orchestrator proposed
+   [verbatim or close paraphrase of the recommendations + rationale]
+
+   ## Foundational context to consult before critiquing
+   - <path 1>: <one-line purpose>
+   - <path 2>: ...
+   [include 2-5 most relevant doc paths; do not flood]
+
+   ## Your task
+   Read the foundational docs first. Then critique the proposal. Structure your response:
+   1. **Directional agreement** — what's right and why (one short paragraph max)
+   2. **Load-bearing disagreements** — specific claims you think are wrong, with rationale grounded in the foundational docs or external evidence. Cite specifics.
+   3. **Blind spots** — what the proposal didn't address but should have
+   4. **Alternative recommendations** — one concrete alternative per major disagreement
+
+   Be specific. "This might not scale" is not useful; "This breaks when N > 10k because <mechanism>" is. Cite the foundational docs by name when relevant.
+   ```
 
 4. **Engage critically with findings.** After the reviewer returns, present to the user:
    - Reviewer's directional agreement (one line)
