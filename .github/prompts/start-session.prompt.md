@@ -16,9 +16,11 @@ bash ~/.claude/hooks/session-start-validator.sh
 
 Present the full output to the user. If there are BLOCKERS, you MUST address every blocker before proceeding with the session workflow. Do not skip, defer, or acknowledge-and-move-on. Fix them.
 
-## MANDATORY: Use the validator's MODE line for quick-vs-full
+## MANDATORY: Use the validator's MODE line for tier selection
 
-In the CC workspace, the validator output's second header line reads `MODE: quick — ...` or `MODE: full — ...`. **Use that verdict directly.** Do not derive the mode yourself from `MEMORY.md`, git log, or context-injected dates — those lag by hours-to-days and have caused repeated wrong-mode declarations within the same day. The validator is the single source of truth.
+The validator output's second header line reads `MODE: full | quick | super-quick — ...`. **Use that verdict directly.** Do not derive the mode yourself from `MEMORY.md`, git log, or context-injected dates — those lag by hours-to-days and have caused repeated wrong-mode declarations within the same day. The validator is the single source of truth.
+
+Tier cadence (cc#221): full = first-of-day; quick = every ~10th in-day session (deep refresh); super-quick = default for 2nd+ session that isn't a deep-refresh slot. Super-quick skips ~20 of the heavy startup checks and jumps straight to GitHub-issue triage — see the "Super-quick start" section of the relevant workflow doc.
 
 ## Workspace detection
 

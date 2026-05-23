@@ -37,6 +37,15 @@ bash ~/.claude/hooks/session-end-validator.sh
 
 Present the full output to the user. If there are BLOCKERS, you MUST fix every blocker before committing. Do not skip, defer, or work around them. The validator checks for zombie items, unprocessed staging, stale MEMORY.md, day-of-week errors, and uncommitted repos.
 
+## Tier selection (cc#221)
+
+`/end-session` defaults to **full**. Two tiers available for lighter wrap-ups:
+
+- `/end-session quick` — mid-day intermediate save; runs the load-bearing subset (process staging, write summary, validator, commit + push). Skips cross-project collect, satellite sync, skill audits, QMD re-index, registry update, delegation log.
+- `/end-session super-quick` — pivoting tasks; runs validator + commit + push only. Skips everything else including the self-improvement evaluation.
+
+Honor the tier argument when present. See the "End session — tier selection" section of `.claude/rules/cc-session-workflow.md` (CC) or `.claude/rules/session-workflow.md` (focused) for the per-tier step list.
+
 ## End session
 
-Execute the end-session workflow.
+Execute the end-session workflow for the selected tier.
