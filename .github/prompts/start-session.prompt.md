@@ -18,7 +18,9 @@ Present the full output to the user. If there are BLOCKERS, you MUST address eve
 
 ## MANDATORY: Use the validator's MODE line for tier selection
 
-The validator output's second header line reads `MODE: full | quick | super-quick — ...`. **Use that verdict directly.** Do not derive the mode yourself from `MEMORY.md`, git log, or context-injected dates — those lag by hours-to-days and have caused repeated wrong-mode declarations within the same day. The validator is the single source of truth.
+The validator output begins with a `MODE: full | quick | super-quick — ...` line (top of output in silenced runs; inside the `═══` header block in full-output runs). **Use that verdict directly.** Do not derive the mode yourself from `MEMORY.md`, git log, or context-injected dates — those lag by hours-to-days and have caused repeated wrong-mode declarations within the same day. The validator is the single source of truth.
+
+On clean super-quick runs, output is intentionally minimal (cc#220 cost-reduction, session 759) — just the MODE line and 30%-sampled INFO. Blockers/warnings always emit full output regardless of tier. Force full output for debugging via `SESSION_VALIDATOR_VERBOSE=1`.
 
 Tier cadence (cc#221): full = first-of-day; quick = every ~10th in-day session (deep refresh); super-quick = default for 2nd+ session that isn't a deep-refresh slot. Super-quick skips ~20 of the heavy startup checks and jumps straight to GitHub-issue triage — see the "Super-quick start" section of the relevant workflow doc.
 
