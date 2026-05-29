@@ -16,11 +16,11 @@ bash ~/.claude/hooks/session-start-validator.sh
 
 Present the full output to the user. If there are BLOCKERS, you MUST address every blocker before proceeding with the session workflow. Do not skip, defer, or acknowledge-and-move-on. Fix them.
 
-## MANDATORY: Use the validator's MODE line for tier selection
+## MANDATORY: Present the validator's MODE menu as a choice (user policy 2026-05-29)
 
-The validator output begins with a `MODE: full | quick | super-quick — ...` line (top of output in silenced runs; inside the `═══` header block in full-output runs). **Use that verdict directly.** Do not derive the mode yourself from `MEMORY.md`, git log, or context-injected dates — those lag by hours-to-days and have caused repeated wrong-mode declarations within the same day. The validator is the single source of truth.
+The validator output includes a `MODE — pick how to start this session (recommended: …)` menu listing all three tiers (full / quick / super-quick) with a one-line explanation of each and a **recommended:** marker on the cadence-appropriate default. **Present that choice to the user via `AskUserQuestion`** — default-select the recommended option but let the user override; do NOT silently auto-proceed on the recommendation. Do not derive the recommendation yourself from `MEMORY.md`, git log, or context-injected dates — those lag by hours-to-days and have caused repeated wrong-mode declarations within the same day. The validator's mechanical detection is the single source of truth for the *recommendation*; the user makes the final call.
 
-On clean super-quick runs, output is intentionally minimal (cc#220 cost-reduction, session 759) — just the MODE line and 30%-sampled INFO. Blockers/warnings always emit full output regardless of tier. Force full output for debugging via `SESSION_VALIDATOR_VERBOSE=1`.
+On clean super-quick runs, output is intentionally minimal (cc#220 cost-reduction, session 759) — just the MODE menu and 30%-sampled INFO. Blockers/warnings always emit full output regardless of tier. Force full output for debugging via `SESSION_VALIDATOR_VERBOSE=1`.
 
 Tier cadence (cc#221): full = first-of-day; quick = every ~10th in-day session (deep refresh); super-quick = default for 2nd+ session that isn't a deep-refresh slot. Super-quick skips ~20 of the heavy startup checks and jumps straight to GitHub-issue triage — see the "Super-quick start" section of the relevant workflow doc.
 
