@@ -33,7 +33,16 @@ Dispatch a second Opus general-purpose agent as an adversarial reviewer for the 
 
    Recommend a model from a **different vendor** than the conversation's current model — same-lineage reviewers share blind spots. Then present the prompt template below as a copy-paste fenced block, preceded by: "Switch your Copilot model picker to <chosen>, then send the block below as your next message." After the review lands, remind the user to switch back to their preferred model.
 
-   **Prompt template (used in both paths):**
+   **Cross-family via OpenRouter (model diversity — catches same-family blind spots):** When the value you want is a *genuinely different model family* (not just a separate context window), run the OpenRouter reviewer. The Opus sub-agent shares Claude's training priors; an OpenRouter reviewer from openai / deepseek / qwen / x-ai does not. Trade-off: the script is a stateless API call — it only sees what you pass it, so **inline the relevant foundational context into the plan text** (it can't read docs itself).
+   - Write the proposal + the relevant foundational context to a temp file (e.g. `/tmp/so-plan.md`).
+   - Single diverse reviewer: `python3 ~/scripts/integrations/second-opinion-or.py --author-family anthropic --plan /tmp/so-plan.md` (`--author-family` is whoever wrote the plan — `anthropic` when it's me; the script excludes that family and lets `openrouter/auto` pick the best reviewer from the rest, so no model slug is pinned).
+   - High-stakes (security, architecture, launch-blocking): add `--panel` for 3 independent reviewers from 3 distinct families + a synthesis note (findings raised by ≥2 reviewers = highest confidence — the adversarial-verify learned-rule pattern). `--json` for structured output.
+   - The script supplies its own adversarial system prompt, so do NOT use the prompt template below for this path — just pass the proposal + inlined context as the `--plan` content.
+   - Cost: ~$0.01–0.20 single, ~$0.03–0.10 panel — bills to the OpenRouter balance (the sanctioned third budget, separate from claude.ai / Copilot).
+
+   **Which path?** Opus sub-agent = best for project-specific reviews where the reviewer should read foundational docs itself (it has tools). OpenRouter = best when you want family-diversity or a multi-model panel and the relevant context fits in the plan text. They compose — dispatch both for a genuinely high-stakes call.
+
+   **Prompt template (used for the Agent + Copilot paths):**
 
    ```
    You are an adversarial senior architect reviewing a plan/recommendation from another agent. Think hard before responding. Your job is to find blind spots, miscalibrated assumptions, and load-bearing gaps. Do not be polite if the plan is wrong; do not invent disagreement if the plan is right.
