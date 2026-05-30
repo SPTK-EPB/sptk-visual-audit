@@ -4,7 +4,7 @@ name: "second-opinion"
 agent: "agent"
 ---
 <!-- Mirrored from ~/.claude/commands/second-opinion.md by scripts/harness/sync-commands-to-prompts.sh -- do not edit directly -->
-Dispatch a second Opus general-purpose agent as an adversarial reviewer for the most recent plan, recommendation, or design proposal in this conversation. Then engage critically with its findings — do not silently accept all feedback.
+Dispatch a second adversarial reviewer for the most recent plan, recommendation, or design proposal in this conversation — either an Opus general-purpose sub-agent (Claude-family, has tools so it can read foundational docs itself) or, to catch same-family blind spots, a cross-family OpenRouter reviewer (`second-opinion-or.py`, non-Anthropic). They compose; pick per the path-selection guidance in step 3. Then engage critically with its findings — do not silently accept all feedback.
 
 ## Dispatch protocol
 
@@ -40,7 +40,7 @@ Dispatch a second Opus general-purpose agent as an adversarial reviewer for the 
    - The script supplies its own adversarial system prompt, so do NOT use the prompt template below for this path — just pass the proposal + inlined context as the `--plan` content.
    - Cost: ~$0.01–0.20 single, ~$0.03–0.10 panel — bills to the OpenRouter balance (the sanctioned third budget, separate from claude.ai / Copilot).
 
-   **Which path?** Opus sub-agent = best for project-specific reviews where the reviewer should read foundational docs itself (it has tools). OpenRouter = best when you want family-diversity or a multi-model panel and the relevant context fits in the plan text. They compose — dispatch both for a genuinely high-stakes call.
+   **Which path?** Opus sub-agent = best for project-specific reviews where the reviewer should read foundational docs itself (it has tools). OpenRouter = best when you want family-diversity or a multi-model panel and the relevant context fits in the plan text. **Strongly prefer the cross-family OpenRouter path when the load-bearing risk is the orchestrator's OWN family bias** — e.g. a not-invented-here adopt-vs-reject call, "we already do this better," or any judgment where an Opus reviewer would share my Claude training priors and thus the same blind spot. They compose — dispatch both for a genuinely high-stakes call.
 
    **Prompt template (used for the Agent + Copilot paths):**
 
