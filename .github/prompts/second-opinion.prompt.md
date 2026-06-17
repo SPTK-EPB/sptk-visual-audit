@@ -93,6 +93,18 @@ Reviewer **count** and **model strength** both scale to the decision's stakes �
 
 The frontier allowlist (`~/scripts/integrations/reviewer-models.json`) is what stops the auto-router from picking a stale model at T2/T3 — `cost_quality_tradeoff: 0` alone does NOT reliably select the newest model (priciest ≠ newest), so high-stakes tiers constrain to curated current frontier slugs.
 
+### Diff-size floor — code-change targets only (cc#297)
+
+When the review target is a concrete code change (a branch / PR / diff), run the diff-size classifier to get a recommended floor, then take the **higher** of it and your stakes judgment from the table above:
+
+```bash
+python3 ~/scripts/infra/review-tier-classify.py --git-range <base>..<head> [--stakes <your-judgment>]
+```
+
+It prints `--stakes <routine|significant|high>` from `effective_tier = max(diff_tier, stakes_tier, security_floor)`: diff size sets a **minimum**, your stakes judgment overrides **upward only** (never down), and security-sensitive paths (auth / secrets / crypto / CI / deploy / migrations / manifests) force `high` regardless of size. Pass the printed value as `--stakes`. The cheap reviewer lane is implied only when it returns `routine` (trivial diff + routine stakes + no security paths).
+
+Effect: a 12-line docs/test edit becomes a 1-reviewer `routine` instead of a 3-family panel, while a 5-line auth change still forces `high`. Path patterns are per-repo-tunable in the classifier (don't trust the defaults blindly on a new repo). **When the target is a PLAN / DESIGN with no diff (e.g. an architecture recommendation), skip the classifier** — your stakes judgment from the table stands alone; the floor only applies to code changes.
+
 ## Proactively OFFER it (problem the agent forgets)
 
 **The moment you commit to a T2 or T3 decision, offering `/second-opinion` in the same turn is mandatory** — one line tied to the trigger that fired: *"This is a T3 decision (touches prod deploy + auth); want a panel review before we commit?"* Don't wait to be asked. (A Stop-hook nudge is a backstop, not a substitute — the offer is yours to make.)
