@@ -8,7 +8,11 @@ Dispatch a second adversarial reviewer for the most recent plan, recommendation,
 
 ## Dispatch protocol
 
-1. **Identify the target.** What is the most recent plan/recommendation in conversation? If ambiguous (multiple candidates in scroll), name the candidates and ask. If clear, proceed.
+1. **Identify the target — and which of two INDEPENDENT gates it is.** There are two review targets, and clearing one NEVER clears the other (they catch different failure classes):
+   - **Design gate** — a plan / recommendation / architecture proposal, reviewed BEFORE building. Catches *wrong approach*: missing failure mode, wrong architecture, the fallback that can't fire.
+   - **Implementation gate** — a completed diff / PR about to merge, reviewed AFTER building. Catches *right approach built wrong*: a guard placed one layer too late, the wrong lever pulled, an ambient side-effect going live, an off-by-one, an untested branch, the diff quietly doing something the plan never said.
+
+   A prior design review is NOT a reason to skip the implementation review (operator directive 2026-07-12; T3-panel-confirmed). If ambiguous which target (multiple candidates in scroll), name them and ask; if clear, proceed. For the implementation gate use the **implementation-review prompt** (below), not the design template.
 
 2. **Gather foundational context.** Before dispatch, locate project-specific foundational docs that the reviewer should consult (apply session 707's N=1 watch: pre-loaded reviewers produce sharper critique). Standard paths to check in the active project workspace:
    - `docs/strategy.md` (or `docs/product-plan.md`, `docs/development-plan.md`)
@@ -72,6 +76,23 @@ Dispatch a second adversarial reviewer for the most recent plan, recommendation,
    Be specific. "This might not scale" is not useful; "This breaks when N > 10k because <mechanism>" is. Cite the foundational docs by name when relevant.
    ```
 
+   **Implementation-review prompt (use this when the target is a completed diff/PR — NOT the design template above).** The impl gate reviews the ACTUAL CODE, risk-scoped. For the OpenRouter path, inline the diff (or just the risky hunks for a large change) into the plan text.
+
+   ```
+   You are an adversarial senior engineer reviewing a COMPLETED code change (a diff/PR) about to merge. The design may already have been reviewed — that does NOT clear this gate. Your job is to find implementation defects: right-approach-built-wrong. Think hard.
+
+   ## The change
+   [inline the diff — or the security/state/concurrency/fallback/error/API/persistence hunks for a large diff — plus a one-paragraph summary of what it's supposed to do + the design it implements]
+
+   ## Review in two passes
+   1. Risk hunks (primary): for each hunk touching security/auth, persisted state/data, concurrency/ordering, a fallback/retry/recovery path, error handling, an external API/wire contract, or money — is it correct? Look specifically for: a guard placed AFTER the thing it guards; the wrong lever pulled (a proxy-injected header used as auth; a timestamp cursor where a monotonic sequence is needed); an ambient side-effect going live; an off-by-one; a fail-OPEN where fail-closed is required; an untested branch; a partial/non-atomic mutation.
+   2. Holistic (secondary, compact): does the diff faithfully implement the design? What does it DO that the design/PR-description did NOT mention? Integration effects on callers/siblings not in the diff?
+
+   Structure: (a) blocking defects — each with exact file:line + the failure input→wrong output; (b) non-blocking risks; (c) faithfulness-to-design deviations; (d) what's untested. Be specific — "breaks when <input> because <mechanism>", not "might have bugs". A clean CI is NOT evidence of correctness.
+   ```
+
+   **Large / heterogeneous diffs:** do NOT dump the whole diff on one reviewer — it exceeds context and spends attention on generated/vendor noise. Scope to the risk hunks above + a compact holistic pass; for a genuinely large change, chunk by subsystem with a final integration pass, or split the PR.
+
 4. **Engage critically with findings.** After the reviewer returns, present to the user:
    - Reviewer's directional agreement (one line)
    - Reviewer's disagreements — for each, my stance: **accept** / **partially accept** / **reject** + one-line reason. Do not blanket-accept; the reviewer can be wrong, especially on project-specific tradeoffs (session 707's reviewer was directionally right but miscalibrated because it lacked the project's existing-architecture context).
@@ -111,9 +132,19 @@ Effect: a 12-line docs/test edit becomes a 1-reviewer `routine` instead of a 3-f
 
 **The moment you commit to a T2 or T3 decision, offering `/second-opinion` in the same turn is mandatory** — one line tied to the trigger that fired: *"This is a T3 decision (touches prod deploy + auth); want a panel review before we commit?"* Don't wait to be asked. (A Stop-hook nudge is a backstop, not a substitute — the offer is yours to make.)
 
-## When to skip
+**Two more mandatory offer surfaces (the implementation gate):**
+- **After you finish coding a design that got a design-review** — that is the trigger for the IMPLEMENTATION review, before merge. Route it **cross-family from the design's reviewer** (a same-family impl review inherits the design review's blind spots); at minimum one impl reviewer that was not the design's primary reviewer, and a different family from the author where possible.
+- **Presenting any PR as merge-ready** — attach a one-line `2nd-opinion: RECOMMEND-T<n> | SKIP` disposition that NAMES a concrete risk reason ("modifies cache-eviction," "new exception in the auth path"), not a bare flag. A RECOMMEND an agent can silently ignore is the loophole in a new coat: a product-source PR resolves to review-ran · named-semantic-exemption · explicit-operator-waiver — never silent-skip. RECOMMEND is the DEFAULT for product-source diffs; SKIP is the justified exception.
 
-- Mechanical execution (no judgment calls in the plan)
-- Already-validated patterns (e.g., reusing a PEV template the user has approved before)
-- Trivial, reversible scope (one-line fix, single-skill rotation) — below T1
-- Time-sensitive incident response where the reviewer round-trip costs more than it saves
+**Before dispatching an impl review, pass your own rigorous self-review + tests first** — the reviewer protects against residual blind spots, not negligence. When findings return, adjudicate each explicitly (accept / reject-with-reason / defer); never blanket-accept.
+
+## When to skip — a SEMANTIC exemption, not a file-type or review-history one
+
+SKIP is the JUSTIFIED EXCEPTION, not the default. For any change that ships **product source**, the review is the default — the operator's lived experience (T3-panel-acknowledged) is that a review almost always surfaces something on a non-trivial diff. Two hard rules first:
+
+- **Prior design review is NEVER a skip reason.** The design gate and the implementation gate are independent (step 1). "We already panel-reviewed the design" does not clear the PR. Delete this from your reasoning — a faithful implementation of a subtly-wrong detail is exactly the class the impl gate exists to catch. A prior design review + a faithful impl LOWERS the *tier* (a cheap design-fidelity pass can step T3→T2); it does NOT authorize a skip.
+- **File type is NOT a reliable skip signal.** Config can change auth/deploy/billing/feature-flags/resource-limits; lockfiles + dependency manifests are supply-chain changes; renames break reflection/serialization/public-API/string-reference/dynamic-import; a one-line runtime constant can outrank 200 lines of boilerplate. Treat config / lockfile / migration / generated-file / rename diffs as *classify*, never auto-skip.
+
+SKIP a change ONLY when ALL of these hold (the semantic exemption): no runtime/deploy/dependency/generated-output effect · no public-contract or persisted-data effect · no security/data/money/concurrency/fallback path · mechanically verifiable · below a small line threshold. **The stakes/security floor overrides every SKIP** — a security-sensitive path forces a review regardless of size.
+
+Genuinely skippable without a review: pure docs/memory prose · a single-skill rotation · mechanical execution with no judgment call · a time-sensitive incident where the round-trip costs more than it saves (say so explicitly).
