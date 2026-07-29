@@ -8,7 +8,7 @@ We will continue in a new session. Execute session evaluation and end steps:
 
 > **Invocation note:** If you arrived here by typing `/end-session` or by selecting an "End session" option, the Skill tool has already loaded this file. Do NOT execute end-session steps from memory shortcuts — invoke the Skill tool with `skill: "end-session"` so this file's contract drives the flow. The self-improvement evaluation below is the part most often skipped when run from memory.
 >
-> **Workspace divergence:** CC workspace (`$HOME`) follows `.claude/rules/cc-session-workflow.md`; focused workspaces follow `.claude/rules/session-workflow.md`. The sections below describe the shared self-improvement + validator contract; workspace-specific commit/push/sync/satellite-propagation steps live in those workflow files.
+> **Workspace divergence:** run `pwd` first. CC workspace (`$HOME`) follows `~/.claude/workflows/cc-session-workflow.md`; focused workspaces follow `~/.claude/workflows/session-workflow.md`. These are **not auto-injected** (they live outside `~/.claude/rules/` precisely so CC's checklist does not leak into focused sessions) — `Read` exactly the one matching `pwd`, never both — and read only the **section** you need (`grep -n '^## ' <file>` for anchors, then `Read` with `offset`/`limit`). The CC file is ~107KB; reading it whole re-pays most of the cost the split exists to remove. The sections below describe the shared self-improvement + validator contract; workspace-specific commit/push/sync/satellite-propagation steps live in those workflow files.
 
 ## Self-improvement evaluation
 
@@ -45,7 +45,7 @@ Present the full output to the user. If there are BLOCKERS, you MUST fix every b
 - `/end-session quick` — mid-day intermediate save; runs the load-bearing subset (process staging, write summary, validator, commit + push). Skips cross-project collect, satellite sync, skill audits, QMD re-index, registry update, delegation log.
 - `/end-session super-quick` — pivoting tasks; runs validator + commit + push only. Skips everything else including the self-improvement evaluation.
 
-Honor the tier argument when present. See the "End session — tier selection" section of `.claude/rules/cc-session-workflow.md` (CC) or `.claude/rules/session-workflow.md` (focused) for the per-tier step list.
+Honor the tier argument when present. See the "End session — tier selection" section of `~/.claude/workflows/cc-session-workflow.md` (CC) or `~/.claude/workflows/session-workflow.md` (focused) for the per-tier step list — read the one matching `pwd`, on demand.
 
 ## End session
 

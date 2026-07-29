@@ -26,12 +26,18 @@ Tier cadence (cc#221): full = first-of-day; quick = every ~10th in-day session (
 
 ## Workspace detection
 
-Check the current working directory to determine which workflow to follow:
+Run `pwd` and **declare the detected workspace out loud** before reading anything else. Do not infer it from injected context — both CC's and the focused repo's `CLAUDE.md` are injected in a focused session, so "I see CC instructions" is not evidence you are in CC.
 
-- If `pwd` is `$HOME` (e.g., `/home/stigm`): this is the **CC workspace** — proceed with `.claude/rules/cc-session-workflow.md`
-- Otherwise: this is a **focused project workspace** — proceed with `.claude/rules/session-workflow.md` (the generic focused session workflow). If the project has its own session-start rules in its CLAUDE.md or `.claude/rules/`, follow those too.
+The session workflows are **NOT auto-injected** — they live in `~/.claude/workflows/` (outside `~/.claude/rules/`, which the harness injects into every workspace). Read exactly ONE of them, on demand, based on `pwd`:
 
-Do NOT run CC-specific steps (cross-project pull, collect-staging, CF usage, gmail, RSS, news) in focused workspaces.
+- If `pwd` is `$HOME` (e.g. `/home/stigm`): **CC workspace** — `Read ~/.claude/workflows/cc-session-workflow.md`
+- Otherwise: **focused project workspace** — `Read ~/.claude/workflows/session-workflow.md`. If the project has its own session-start rules in its `CLAUDE.md` or `.claude/rules/`, follow those too.
+
+**Read the SECTION you need, not the whole file.** `cc-session-workflow.md` is ~107KB (~26k tokens) — reading it whole re-pays most of the cost this split exists to remove. `grep -n '^## ' <file>` for the section anchors, then `Read` with `offset`/`limit` (e.g. the tier's start-session section only). Same for the focused workflow.
+
+**Never read the other one.** Reading CC's checklist in a focused workspace is the failure this split exists to prevent: it is ~26k tokens of CC-only procedure that displaces the repo's own context and reliably drags the briefing into CC-scope work (gmail, cross-project pull, proxmox/Garage health, billing, org-wide sweeps).
+
+Do NOT run CC-specific steps (cross-project pull, collect-staging, CF usage, gmail, RSS, news, infra/posture health checks, billing) in focused workspaces. A focused start-session processes checks for **that workspace only** — the sole cross-tree reads it is allowed are its own CC→workspace handover brief (`~/memory/handover/<repo>.md`) and the shared-rules sync.
 
 ## MANDATORY: After sync, fan out immediately
 
