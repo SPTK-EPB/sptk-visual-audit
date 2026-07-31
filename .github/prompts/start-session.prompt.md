@@ -49,6 +49,16 @@ In focused workspaces, this means batching as many of the post-sync startup prob
 
 In CC, this means batching the post-sync read-only health-check fan-out (steps 4, 5, 5b, 5c, 5d, 5e, 5f, 5g, 5h, 5i, 5j, 5k, 6, 7, 8, 9, 9b, 9c) as several parallel batches grouped by exit-code safety. Scripts that exit non-zero on findings (`proxmox-health-check.sh` exit 2 on ALERT, `billing-check.py --auth-probe` exit 2 on 401, `security-triage.py --quiet` may print ACTION but exits 0, `secrets-env-lint --quiet` exits 1 on findings) MUST run alone or be bundled only with other exit-non-zero scripts — never with read-safe siblings. Per the cascade-cancel learned-rule, exit-non-zero in one parallel-block sibling cancels the others.
 
+## MANDATORY: Full-start briefing priority order (operator directive 2026-07-29)
+
+**At a FULL start, the news/RSS items that can improve HOW WE WORK are the priority — lead the briefing with them.** Each gets its class (build-candidate / adopt-watch / stack-fit / FYI) and the specific open item or workflow it touches. Full-start order:
+
+**news + feeds → ops/safety findings (any live ALERT/WARN blocker still leads) → billing → dashboard + inbox + CF usage + tool failures → GitHub Issues LAST.**
+
+**Issues are the priority at quick and super-quick starts, not full.** Rationale: a full start is the once-a-day slot where the daily-drift intake actually ran; burying it under the backlog wastes the only pass that sees it, and the backlog is re-surfaced at every other tier anyway.
+
+**Never invert this and then recommend issue work off a full start.** This contract lives in `cc-session-workflow.md` step 10; it is restated here because that file is read section-by-section and step 10 is routinely missed (session 1143). When you name a pick, run it through `verify-work-options.sh --verdict-only` — a reasoned/free-text pick with no dominating `<repo>#N` renders as `UNVERIFIED — /proceed to confirm`, never "the natural pick."
+
 ## MANDATORY: Visible tool-result panes are current state
 
 If VS Code opens a terminal-result pane, generated-output pane, or similar result surface while `/start-session` is running, treat that pane as the current state of the just-finished step.
