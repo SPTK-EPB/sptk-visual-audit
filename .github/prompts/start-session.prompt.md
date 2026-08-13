@@ -51,13 +51,15 @@ In CC, this means batching the post-sync read-only health-check fan-out (steps 4
 
 ## MANDATORY: Full-start briefing priority order (operator directive 2026-07-29)
 
-**At a FULL start, the news/RSS items that can improve HOW WE WORK are the priority — lead the briefing with them.** Each gets its class (build-candidate / adopt-watch / stack-fit / FYI) and the specific open item or workflow it touches. Full-start order:
+**Scope: everything below the next paragraph is CC-only.** The steps this contract sequences — news + feeds, billing, CF usage, inbox — exist ONLY in CC (`cc-session-workflow.md`); a focused workspace has none of them at any tier (`session-workflow.md`'s Check-tiers section is explicit that they are CC-scope). **In a focused workspace this reduces to: ops/safety findings first (any live ALERT/WARN blocker leads), GitHub Issues last** — the news/billing/CF/inbox ordering does not apply there.
+
+**At a CC FULL start, the news/RSS items that can improve HOW WE WORK are the priority — lead the briefing with them.** Each gets its class (build-candidate / adopt-watch / stack-fit / FYI) and the specific open item or workflow it touches. Full-start order:
 
 **news + feeds → ops/safety findings (any live ALERT/WARN blocker still leads) → billing → dashboard + inbox + CF usage + tool failures → GitHub Issues LAST.**
 
-**Issues are the priority at quick and super-quick starts, not full.** Rationale: a full start is the once-a-day slot where the daily-drift intake actually ran; burying it under the backlog wastes the only pass that sees it, and the backlog is re-surfaced at every other tier anyway.
+**Issues are the priority at CC quick and super-quick starts, not full.** Rationale: a full start is the once-a-day slot where the daily-drift intake actually ran; burying it under the backlog wastes the only pass that sees it, and the backlog is re-surfaced at every other tier anyway.
 
-**Never invert this and then recommend issue work off a full start.** This contract lives in `cc-session-workflow.md` step 10; it is restated here because that file is read section-by-section and step 10 is routinely missed (session 1143). When you name a pick, run it through `verify-work-options.sh --verdict-only` — a reasoned/free-text pick with no dominating `<repo>#N` renders as `UNVERIFIED — /proceed to confirm`, never "the natural pick."
+**Never invert this and then recommend issue work off a full start.** This contract lives in `cc-session-workflow.md` step 10; it is restated here because that file is read section-by-section and step 10 is routinely missed (session 1143). When you name a pick (in ANY workspace — this one rule is cross-scope), run it through `verify-work-options.sh --verdict-only` — a reasoned/free-text pick with no dominating `<repo>#N` renders as `UNVERIFIED — /proceed to confirm`, never "the natural pick."
 
 ## MANDATORY: Visible tool-result panes are current state
 
