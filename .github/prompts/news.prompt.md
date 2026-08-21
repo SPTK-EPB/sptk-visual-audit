@@ -26,6 +26,8 @@ Run (venv python):
 
 The JSON gives `{window, count, records[], hn_errors}`. If `hn_errors` is non-empty, say so and treat the pass as **DEGRADED** — do not conclude "nothing relevant" off partial coverage (degraded-coverage-honesty rule).
 
+> ⚠️ **Redirect the `--json` output to a scratchpad file** (`… --json > "$SCRATCH/news.json"`) and parse from there. A 7d/30d review is reliably >25KB (100+ records) — piping it through `head` or `json.load`-ing the persisted tool-output file truncates the JSON mid-string (`JSONDecodeError`, costs a re-run). Read the file with a small Python categorizer (flag buckets: `hard`/`threed`/`keywords`/`local_hw`, plus top-N by HN `points` and the non-HN official-source rows) rather than dumping all records into context.
+
 ## 3. Triage every item through the product lens (reuse the weekly-digest 3-tier lens)
 
 **Never dismiss an item solely because "we're past this version" or "we don't use this tool."** For each item, answer the two mandatory questions (weekly-digest deep-eval rule):
