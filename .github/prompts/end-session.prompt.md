@@ -24,11 +24,24 @@ Before running the end-session workflow, evaluate this session for improvements:
 
 8. **Gate-verdict labelling (cc#495).** Run `bash ~/scripts/infra/gate-verdict-label.sh pending` — it lists this session's pretool-safety-gate fires as distinct `(check, project)` groups not yet labelled (silent = clean, skip). For each line, judge from your own session context whether the fire was correct and record it: `bash ~/scripts/infra/gate-verdict-label.sh record --check <id> --verdict tp|fp|cbn --project <project> --fires <n> --note "<short reason>"`. Verdicts: `tp` = correct fire; `fp` = the check flagged an invocation it should not have; `cbn` = correct-but-noisy — the fire is correct behaviour for the check's contract but the invocation was benign (the meta-FP class: checks 9/21/22 matching their own patterns inside quoted payloads / doc heredocs — cc#474 established this is CORRECT for a security check, so it must NOT be labelled `fp`). ⚠️ NEVER put command text or credentials in `--note` — the verdict log inherits the gate's no-command-text property. Include a one-line `gate verdicts: N labelled (X tp / Y fp / Z cbn)` in the recap so the operator can veto. These labels are the input to `gate-verdict-label.sh rates`, the per-check FP rate cc#474 phase 2b gates ADVISORY_ENABLED widening on.
 
-IMPORTANT: Capture every observation, even minor — small improvements compound. But CAPTURE ≠ DEFER. Apply the **two-minute rule** first: items trivially fixable in <2 min get done in this session (rule update, doc fix, comment in an issue, one-line script tweak). Items that need cross-session context, design decisions, or non-trivial work get filed as GitHub issues OR added to the carried-tasks list. Items processed via the two-minute rule are NOT carried forward — they're DONE. The carry list is for genuinely-deferred work, not for everything observed.
+IMPORTANT — **the default disposition of an observation is DISCARD** (cc#578, 2026-09-01). This inverts the previous "capture every observation, even minor — small improvements compound" instruction, which was measured to accumulate rather than compound: 60 of CC's 121 open issues had never been updated since filing, and 72% of what CC actually *closed* in August was instrument work. The burden of justification now sits on FILING, not on excluding.
+
+Apply, in order:
+
+1. **Two-minute rule** — trivially fixable in <2 min (rule update, doc fix, issue comment, one-line script tweak)? Do it now. NOT carried forward — DONE.
+2. **Otherwise DISCARD by default.** An observation about our own instruments is discarded unless it clears the filing bar below. Discarding is the normal outcome and needs no justification, no carry entry, and no "explicit reason it was excluded".
+3. **Filing bar** — file a GitHub issue ONLY if the observation is (a) a correctness or security defect in something currently relied upon, (b) blocking a named piece of product work, or (c) operator-directed. "Would be nice", "hardening", "non-blocking", "polish", and "for completeness" are DISCARD, not file.
+4. **Carry list** is for genuinely-deferred work with a named next action — never a parking lot for observations.
+
+If an observation feels too valuable to discard but does not clear the filing bar, it is a **watch** (`memory/watches.md`), not an issue. Recurrence promotes it; silence retires it.
 
 ## Evaluation → Task extraction
 
-After generating the evaluation, extract a numbered checklist of ALL actionable items from it — every friction point fix, skill update, pattern to capture, and MCP gap. Then when writing the session summary, cross-reference this checklist against the carried items list. Every extracted item must appear either as a carried task or with an explicit reason it was excluded. Present this cross-reference to the user before finalizing.
+After generating the evaluation, extract a numbered checklist of items that clear the **filing bar** above — not "ALL actionable items". Items below the bar are discarded silently and do NOT need to appear anywhere.
+
+⚠️ **The old contract here — "every extracted item must appear either as a carried task or with an explicit reason it was excluded" — is REVOKED (cc#578).** It made discarding more expensive than filing, and was the pressure valve that routed observations into the backlog. Requiring a written justification per discard is exactly the friction that made filing the path of least resistance.
+
+When writing the session summary, report only: the count of observations made, the count filed (with refs), and the count discarded. A high discard ratio is a HEALTHY signal, not a gap to explain.
 
 ## MANDATORY: Run end-session validator before committing
 
