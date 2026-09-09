@@ -9,7 +9,7 @@ on:
 
 jobs:
   check:
-    runs-on: [self-hosted, avno]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
@@ -19,26 +19,8 @@ jobs:
         with:
           node-version: "22"
           cache: pnpm
-      - name: Pre-install diagnostics (cc#97 pilot baseline)
-        run: |
-          echo "pnpm version: $(pnpm --version)"
-          echo "pnpm store path: $(pnpm store path 2>/dev/null || echo 'not-yet-initialized')"
-          echo "rootfs before install:"
-          df -h /home | tail -1
-          echo "node_modules size before install:"
-          du -sh node_modules 2>/dev/null || echo "no prior node_modules"
-        shell: bash
       - name: Install deps (for peer-dep smoke test)
         run: pnpm install --frozen-lockfile
-      - name: Post-install diagnostics (cc#97 pilot)
-        run: |
-          echo "pnpm store after install:"
-          du -sh $(pnpm store path) 2>/dev/null || echo "no store"
-          echo "node_modules size after install:"
-          du -sh node_modules
-          echo "rootfs after install:"
-          df -h /home | tail -1
-        shell: bash
       - name: Syntax check (node --check)
         run: |
           shopt -s globstar
