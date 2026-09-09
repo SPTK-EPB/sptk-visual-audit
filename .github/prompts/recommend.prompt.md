@@ -10,7 +10,7 @@ Make a concrete recommendation. Commit to a position — don't ask scoping quest
 
 **If this is early in the session** (briefing just completed, no substantive work done yet, user is picking what to work on): recommend a **high-value GitHub issue** to pick up next.
 
-- Query open issues across active SPTK-EPB repos via `gh search issues --owner SPTK-EPB --state open --sort updated --limit 30` (or use the per-issue lists already loaded from session-start). Prefer `agent-ready` and `quick-fix` labels for first-pick candidates; consider higher-leverage `enhancement` issues when no quick wins are open.
+- Query open issues across active SPTK-EPB repos via `gh search issues "archived:false" --owner SPTK-EPB --state open --sort updated --limit 30` (or use the per-issue lists already loaded from session-start). Prefer `agent-ready` and `quick-fix` labels for first-pick candidates; consider higher-leverage `enhancement` issues when no quick wins are open.
 - Score by: unblocks other work (highest), fits this workspace's scope, ships in one session, recent activity (not stale), clear acceptance criteria. Avoid issues blocked on a sibling repo, ambiguous scope, or pending design review.
 - Verify the candidate is still open and unowned (`gh issue view <num>`) — issue lists go stale within hours. For sibling-repo carries, cross-check live state per the "Verify sibling repo state via `gh`" learned-rule.
 
