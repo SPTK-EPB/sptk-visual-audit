@@ -23,7 +23,7 @@ version change needed).
 
 ## Stack
 
-Node.js 22+ (required; see `engines` in package.json), Playwright 1.45+ (peer dep),
+Node.js 22+ (required; see `engines` in package.json), Playwright 1.45+ (peer dep; `pixelmatch` + `pngjs` optional peers for the compare helper),
 ESM only (`.mjs` throughout), JSDoc for types (no TypeScript, no tsc step).
 Bun for development; consumers may use Bun or Node to run the library.
 

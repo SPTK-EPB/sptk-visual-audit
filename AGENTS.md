@@ -10,13 +10,13 @@ during responsive-design audits.
   web projects (UDM, dugnad-dashboard, smie, agent-obs).
 - **Runtime**: Node.js 22+ / Bun. ESM only (`type: "module"`).
 - **Shape**: pure library — no CLI, no build step. JSDoc types, no `.ts`.
-- **Peer dependencies**: Playwright 1.45+ (consumers install).
+- **Peer dependencies**: Playwright 1.45+ (consumers install). `pixelmatch` + `pngjs` are optional peers, needed only by `compareScreenshots` (`src/compare.mjs`).
 - **Consumer contract**: auth adapter + page registry (see `docs/ADAPTER.md`).
 
 ## Stack
 
 - Node.js 22 / Bun (ESM)
-- Playwright (chromium) as peer dependency
+- Playwright (chromium) as peer dependency; `pixelmatch` + `pngjs` optional peers (compare helper)
 - JSDoc for types, no TypeScript build step
 
 ## Conventions
@@ -56,7 +56,8 @@ docs/
   specific defaults.
 - **Don't add build tooling.** Ship `.mjs` with JSDoc. Consumers use it directly.
 - **Don't introduce hard dependencies.** Every new dep becomes a consumer burden.
-  Playwright is the only peer dep; keep it that way.
+  Playwright is the only required peer dep; keep it that way. `pixelmatch` and `pngjs`
+  are optional peers (`peerDependenciesMeta`) for the compare helper only.
 
 ## Development
 
