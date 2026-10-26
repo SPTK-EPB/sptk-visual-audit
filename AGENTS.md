@@ -7,7 +7,7 @@ during responsive-design audits.
 ## Project overview
 
 - **Purpose**: single source of truth for visual-audit tooling across SPTK-EPB
-  web projects (UDM, dugnad-dashboard, smie, agent-obs).
+  web projects (UDM today; dugnad-dashboard, smie and agent-obs are archived).
 - **Runtime**: Node.js 22+ / Bun. ESM only (`type: "module"`).
 - **Shape**: pure library — no CLI, no build step. JSDoc types, no `.ts`.
 - **Peer dependencies**: Playwright 1.45+ (consumers install). `pixelmatch` + `pngjs` are optional peers, needed only by `compareScreenshots` (`src/compare.mjs`).

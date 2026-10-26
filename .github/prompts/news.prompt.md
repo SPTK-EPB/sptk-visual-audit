@@ -37,7 +37,7 @@ The JSON gives `{window, count, records[], hn_errors}`. If `hn_errors` is non-em
 
 Then classify each keeper:
 
-- **build-candidate** — prior art that should inform a product we build (lokalmeny / ADM / ReQuest / Smie / UDM). File a GitHub issue on the owning repo.
+- **build-candidate** — prior art that should inform a product we build (ADM / UDM). File a GitHub issue on the owning repo.
 - **adopt-watch** — a tool/pattern/harness change worth trying (a Claude Code / VS Code / Cloudflare feature, a new library, an agent-workflow idea).
 - **stack-fit** — a cheaper/better alternative to something in our stack.
 - **genuinely-FYI** — industry noise, no action. One line, then drop.
