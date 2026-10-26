@@ -81,7 +81,7 @@ async function authenticate(_browser, baseUrl) {
 }
 ```
 
-Canonical reference: [dugnad-dashboard/audit/auth.mjs](https://github.com/SPTK-EPB/dugnad-dashboard/blob/main/audit/auth.mjs).
+Canonical reference: [dugnad-dashboard/audit/auth.mjs](https://github.com/SPTK-EPB/dugnad-dashboard/blob/main/audit/auth.mjs) (repo archived, still readable).
 
 Gotcha: `bun run <script>` populates `.env.local` vars in Bun's own
 `process.env`, but child `node`-shim binaries (`astro`, `vite`, `next`)

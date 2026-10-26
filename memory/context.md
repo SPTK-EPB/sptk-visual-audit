@@ -39,11 +39,11 @@ Auth is an adapter the consumer provides.
 
 Phase 1.a (initial landing — no consumers wired yet):
 
-- **UDM** (android-device-manager) — pending Phase 1.b wire-up
+- **UDM** (android-device-manager) — Phase 1.b done; consumes `@sptk-epb/visual-audit` (#197 closed 2026-04-19)
 
 Phase 4 (planned):
 
-- dugnad-dashboard, smie, agent-obs — any web project that needs responsive audits
+- Any new web project that needs responsive audits. The earlier candidates (dugnad-dashboard, smie, agent-obs) are archived; Smie was decommissioned 2026-09-07.
 
 ## Agent HQ Status
 

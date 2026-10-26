@@ -30,7 +30,7 @@
 ### Phase 4 — CC-level skill promotion
 
 - Move UDM's `responsive-audit-workflow` skill to CC-level
-- File per-project adoption issues (dugnad-dashboard, smie, agent-obs)
+- File per-project adoption issues for new web projects (the original targets dugnad-dashboard, smie and agent-obs are archived)
 
 ### Phase 5 — Close duplicate per-project scripts
 

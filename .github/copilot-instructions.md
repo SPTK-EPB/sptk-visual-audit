@@ -73,9 +73,9 @@ AGENTS.md              Agent-readable project overview and conventions
 
 | Repo | Status | Issue |
 |------|--------|-------|
-| android-device-manager | Phase 1.b — in progress | [#197](https://github.com/SPTK-EPB/android-device-manager/issues/197) |
-| dugnad-dashboard | Phase 2 — pending | [#28](https://github.com/SPTK-EPB/dugnad-dashboard/issues/28) |
-| smie | Phase 2 — pending | [#67](https://github.com/SPTK-EPB/smie/issues/67) |
+| android-device-manager | Adopted (Phase 1.b done) | [#197](https://github.com/SPTK-EPB/android-device-manager/issues/197) |
+| dugnad-dashboard | Retired — repo archived | [#28](https://github.com/SPTK-EPB/dugnad-dashboard/issues/28) |
+| smie | Retired — repo archived (Smie decommissioned 2026-09-07) | [#67](https://github.com/SPTK-EPB/smie/issues/67) |
 
 Rollout tracked at [command-center#76](https://github.com/SPTK-EPB/command-center/issues/76).
 
