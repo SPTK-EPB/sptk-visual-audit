@@ -103,9 +103,9 @@ consumers pin by git SHA, not semver.
 
 ## Testing
 
-Unit tests live next to the code as `src/**/*.test.mjs` (`node:test`; today
-`src/compare.test.mjs` and `src/utils/png-dimensions.test.mjs`). Run them with
-`npm test` (or `bun run test`) after installing devDeps (`pngjs` builds the fixtures).
+Unit tests live next to the code as `src/**/*.test.mjs` (`node:test`): `compareScreenshots`,
+`readPngDimensions` and `detectOverflow` (against a stub page object) are covered. Run them with
+`npm test` (or `bun run test`) after installing devDeps (`pngjs` builds the PNG fixtures).
 The glob in the `test` script must stay quoted — see
 `.claude/rules/sptk-visual-audit.md`.
 
@@ -115,7 +115,8 @@ pipeline end-to-end against the library.
 Not yet covered:
 - Smoke test: launch a local HTML fixture, run `captureScreenshots` against it,
   assert file counts and presence of overflow warnings when expected.
-- Unit tests: `detectOverflow` and `describeElement` against a jsdom page.
+- Unit tests: `describeElement` (none yet), and `detectOverflow` against a real
+  jsdom page rather than a stub.
 
 ## CI
 
