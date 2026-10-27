@@ -103,11 +103,16 @@ consumers pin by git SHA, not semver.
 
 ## Testing
 
-No test suite yet. Phase 1 is a verbatim extract — correctness is proven by
-running the UDM audit pipeline end-to-end against the library (Phase 1.b, in
-the UDM workspace).
+Unit tests live next to the code as `src/**/*.test.mjs` (`node:test`; today
+`src/compare.test.mjs` and `src/utils/png-dimensions.test.mjs`). Run them with
+`npm test` (or `bun run test`) after installing devDeps (`pngjs` builds the fixtures).
+The glob in the `test` script must stay quoted — see
+`.claude/rules/sptk-visual-audit.md`.
 
-Future test plan:
+Capture itself has no automated test: it is proven by running the UDM audit
+pipeline end-to-end against the library.
+
+Not yet covered:
 - Smoke test: launch a local HTML fixture, run `captureScreenshots` against it,
   assert file counts and presence of overflow warnings when expected.
 - Unit tests: `detectOverflow` and `describeElement` against a jsdom page.
